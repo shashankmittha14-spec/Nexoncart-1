@@ -1,0 +1,244 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Qzero Premium Design System - Light Mode Only */
+
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+
+@layer base {
+  :root {
+    /* Core Brand Colors */
+    --background: 200 20% 98%;
+    --foreground: 210 25% 15%;
+
+    /* Card with glassmorphism support */
+    --card: 0 0% 100%;
+    --card-foreground: 210 25% 15%;
+
+    /* Popover */
+    --popover: 0 0% 100%;
+    --popover-foreground: 210 25% 15%;
+
+    /* Primary - Premium Teal */
+    --primary: 174 72% 40%;
+    --primary-foreground: 0 0% 100%;
+    --primary-light: 174 72% 95%;
+    --primary-glow: 174 72% 50%;
+
+    /* Secondary - Soft Blue Gray */
+    --secondary: 210 20% 96%;
+    --secondary-foreground: 210 25% 25%;
+
+    /* Muted */
+    --muted: 210 15% 94%;
+    --muted-foreground: 210 15% 45%;
+
+    /* Accent - Warm Coral */
+    --accent: 12 90% 60%;
+    --accent-foreground: 0 0% 100%;
+    --accent-light: 12 90% 95%;
+
+    /* Success - Fresh Green */
+    --success: 152 60% 45%;
+    --success-foreground: 0 0% 100%;
+    --success-light: 152 60% 95%;
+
+    /* Warning - Warm Amber */
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+    --warning-light: 38 92% 95%;
+
+    /* Destructive */
+    --destructive: 0 72% 55%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* UI Elements */
+    --border: 210 20% 90%;
+    --input: 210 20% 92%;
+    --ring: 174 72% 40%;
+
+    --radius: 1rem;
+
+    /* Glassmorphism */
+    --glass-bg: 0 0% 100% / 0.7;
+    --glass-border: 0 0% 100% / 0.4;
+    --glass-shadow: 210 25% 15% / 0.08;
+
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(174 72% 40%), hsl(180 65% 50%));
+    --gradient-accent: linear-gradient(135deg, hsl(12 90% 60%), hsl(25 95% 55%));
+    --gradient-hero: linear-gradient(180deg, hsl(200 20% 98%) 0%, hsl(174 72% 95%) 100%);
+    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%) 0%, hsl(210 20% 98%) 100%);
+
+    /* Shadows */
+    --shadow-sm: 0 2px 8px hsl(210 25% 15% / 0.06);
+    --shadow-md: 0 4px 20px hsl(210 25% 15% / 0.1);
+    --shadow-lg: 0 8px 40px hsl(210 25% 15% / 0.12);
+    --shadow-glow: 0 0 40px hsl(174 72% 40% / 0.3);
+
+    /* Sidebar (keeping for compatibility) */
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 210 25% 25%;
+    --sidebar-primary: 174 72% 40%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 210 20% 96%;
+    --sidebar-accent-foreground: 210 25% 25%;
+    --sidebar-border: 210 20% 90%;
+    --sidebar-ring: 174 72% 40%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    background: var(--gradient-hero);
+    min-height: 100vh;
+  }
+}
+
+@layer components {
+  /* Glassmorphism Card */
+  .glass-card {
+    @apply rounded-2xl border;
+    background: hsl(var(--glass-bg));
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-color: hsl(var(--glass-border));
+    box-shadow: var(--shadow-md);
+  }
+
+  /* Premium Button Styles */
+  .btn-primary {
+    @apply px-6 py-3 rounded-xl font-semibold text-primary-foreground transition-all duration-300;
+    background: var(--gradient-primary);
+    box-shadow: var(--shadow-md), var(--shadow-glow);
+  }
+
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg), 0 0 50px hsl(174 72% 40% / 0.4);
+  }
+
+  .btn-primary:active {
+    transform: translateY(0);
+  }
+
+  .btn-secondary {
+    @apply px-6 py-3 rounded-xl font-semibold bg-secondary text-secondary-foreground transition-all duration-300;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .btn-secondary:hover {
+    @apply bg-muted;
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+  }
+
+  .btn-accent {
+    @apply px-6 py-3 rounded-xl font-semibold text-accent-foreground transition-all duration-300;
+    background: var(--gradient-accent);
+    box-shadow: var(--shadow-md);
+  }
+
+  /* Input Styles */
+  .input-premium {
+    @apply w-full px-4 py-3 rounded-xl border-2 border-transparent bg-input transition-all duration-300;
+  }
+
+  .input-premium:focus {
+    @apply outline-none border-primary bg-card;
+    box-shadow: 0 0 0 4px hsl(174 72% 40% / 0.1);
+  }
+
+  /* Badge Styles */
+  .badge-success {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-sm font-medium;
+    background: hsl(var(--success-light));
+    color: hsl(var(--success));
+  }
+
+  .badge-warning {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-sm font-medium;
+    background: hsl(var(--warning-light));
+    color: hsl(var(--warning));
+  }
+
+  .badge-accent {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-sm font-medium;
+    background: hsl(var(--accent-light));
+    color: hsl(var(--accent));
+  }
+
+  /* Scanner Frame Animation */
+  @keyframes scan-line {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(200px); }
+  }
+
+  .scan-line {
+    animation: scan-line 2s ease-in-out infinite;
+  }
+
+  /* Pulse Animation for Alerts */
+  @keyframes pulse-ring {
+    0% { transform: scale(1); opacity: 1; }
+    100% { transform: scale(1.5); opacity: 0; }
+  }
+
+  .pulse-ring {
+    animation: pulse-ring 1.5s ease-out infinite;
+  }
+
+  /* Floating Animation */
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+
+  /* Shimmer Loading Effect */
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+
+  .shimmer {
+    background: linear-gradient(90deg, hsl(var(--muted)) 25%, hsl(var(--background)) 50%, hsl(var(--muted)) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+  }
+}
+
+@layer utilities {
+  .text-gradient-primary {
+    background: var(--gradient-primary);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .text-gradient-accent {
+    background: var(--gradient-accent);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .safe-area-inset {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
