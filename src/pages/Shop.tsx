@@ -84,6 +84,8 @@ const Shop = () => {
   }, [searchParams]);
 
   const startScanner = useCallback(async () => {
+    // Make scanner visible before starting so mobile browsers can attach camera stream correctly
+    setIsScanning(true);
     try {
       const html5QrCode = new Html5Qrcode('scanner');
       scannerRef.current = html5QrCode;
@@ -115,13 +117,13 @@ const Shop = () => {
           // QR Code scan error - silent
         }
       );
-
-      setIsScanning(true);
     } catch (err) {
       console.error('Error starting scanner:', err);
       toast.error('Could not access camera', {
         description: 'Please allow camera access to scan products',
       });
+      // revert UI state
+      setIsScanning(false);
     }
   }, [addItem]);
 

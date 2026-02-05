@@ -70,7 +70,7 @@ const Landing = () => {
       {/* Header */}
       <header className="fixed top-0 left-0 right-0 z-50">
         <div className="glass-card relative mx-4 mt-4 px-6 py-4">
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="absolute inset-0 hidden sm:flex items-center justify-center pointer-events-none">
             <span className="text-sm font-medium text-muted-foreground">The wait ends here</span>
           </div>
           <div className="flex items-center justify-between">
