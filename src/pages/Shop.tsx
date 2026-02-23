@@ -42,6 +42,8 @@ const Shop = () => {
   const [recentTx, setRecentTx] = useState<Array<{ transactionId: string; amount: number; items: number; timestamp: string }>>([]);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [profileForm, setProfileForm] = useState<{ name?: string; email?: string; phone?: string; address?: string }>({});
+  const [manualBarcodeInput, setManualBarcodeInput] = useState('');
+  const [showManualInput, setShowManualInput] = useState(false);
 
   const { 
     items, 
@@ -101,48 +103,74 @@ const Shop = () => {
   }, [searchParams]);
 
   const startScanner = useCallback(async () => {
-    // Make scanner visible before starting so mobile browsers can attach camera stream correctly
     setIsScanning(true);
+    setShowManualInput(false);
+    
     try {
+      // Request camera permission first
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const hasCamera = devices.some(device => device.kind === 'videoinput');
+      
+      if (!hasCamera) {
+        console.error('No camera device found');
+        toast.error('No camera found', {
+          description: 'Your device does not have a camera. Use manual barcode input instead.',
+        });
+        setIsScanning(false);
+        setShowManualInput(true);
+        return;
+      }
+
+      // Try to get camera permission
+      try {
+        await navigator.mediaDevices.getUserMedia({ 
+          video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } },
+          audio: false 
+        });
+      } catch (permissionErr) {
+        console.error('Camera permission denied:', permissionErr);
+        toast.error('Camera access denied', {
+          description: 'Please allow camera access in your browser settings or use manual input.',
+        });
+        setIsScanning(false);
+        setShowManualInput(true);
+        return;
+      }
+
       const html5QrCode = new Html5Qrcode('scanner');
       scannerRef.current = html5QrCode;
 
       await html5QrCode.start(
-        { facingMode: 'environment' },
+        { 
+          facingMode: 'environment',
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        },
         {
-          fps: 10,
-          qrbox: { width: 250, height: 150 },
+          fps: 60,
+          qrbox: { width: 300, height: 300 },
+          disableFlip: false,
+          aspectRatio: 1.0
         },
         (decodedText) => {
-          // Find product by barcode
-          const product = findProductByBarcode(decodedText);
-          if (product) {
-            addItem(product);
-            toast.success(`Added ${product.name} to cart`, {
-              description: `₹${product.price}`,
-            });
-          } else {
-            // For demo, add a random product when barcode not found
-            const randomProduct = mockProducts[Math.floor(Math.random() * mockProducts.length)];
-            addItem(randomProduct);
-            toast.success(`Added ${randomProduct.name} to cart`, {
-              description: `₹${randomProduct.price}`,
-            });
-          }
+          handleBarcodeDetected(decodedText);
         },
-        () => {
-          // QR Code scan error - silent
+        (errorMessage) => {
+          // Silent error - scanner is constantly trying
         }
       );
+      
+      console.log('✅ Scanner started successfully');
     } catch (err) {
       console.error('Error starting scanner:', err);
-      toast.error('Could not access camera', {
-        description: 'Please allow camera access to scan products',
+      const errorMsg = err instanceof Error ? err.message : 'Unknown error';
+      toast.error('Scanner error', {
+        description: `${errorMsg}. Try manual barcode input instead.`,
       });
-      // revert UI state
       setIsScanning(false);
+      setShowManualInput(true);
     }
-  }, [addItem]);
+  }, []);
 
   const stopScanner = useCallback(async () => {
     if (scannerRef.current?.isScanning) {
@@ -151,6 +179,28 @@ const Shop = () => {
     }
     setIsScanning(false);
   }, []);
+
+  const handleBarcodeDetected = useCallback((barcode: string) => {
+    const product = findProductByBarcode(barcode);
+    if (product) {
+      addItem(product);
+      toast.success(`Added ${product.name} to cart`, {
+        description: `₹${product.price}`,
+      });
+      setManualBarcodeInput('');
+    } else {
+      toast.error('Product not found', {
+        description: `Barcode ${barcode} not in system`,
+      });
+    }
+  }, [addItem]);
+
+  const handleManualBarcode = () => {
+    if (manualBarcodeInput.trim()) {
+      handleBarcodeDetected(manualBarcodeInput.trim());
+      setManualBarcodeInput('');
+    }
+  };
 
   useEffect(() => {
     return () => {
@@ -326,8 +376,8 @@ const Shop = () => {
 
           <div 
             id="scanner" 
-            className={`rounded-xl overflow-hidden bg-foreground/5 ${
-              isScanning ? 'aspect-video' : 'hidden'
+            className={`rounded-xl overflow-hidden bg-foreground/5 w-full ${
+              isScanning ? 'block aspect-square max-w-md mx-auto' : 'hidden'
             }`}
           />
 
@@ -355,6 +405,44 @@ const Shop = () => {
               <X className="w-4 h-4 mr-2" />
               {t('shop.stopScanner')}
             </Button>
+          )}
+
+          {/* Manual Barcode Input */}
+          {showManualInput && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-lg"
+            >
+              <p className="text-sm text-amber-800 mb-3 font-medium">Camera not available. Use manual barcode entry:</p>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="Enter barcode number..."
+                  value={manualBarcodeInput}
+                  onChange={(e) => setManualBarcodeInput(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && handleManualBarcode()}
+                  className="flex-1 px-3 py-2 rounded-lg border border-amber-300 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+                <Button
+                  onClick={handleManualBarcode}
+                  className="bg-primary hover:bg-primary/90"
+                  size="sm"
+                >
+                  Add
+                </Button>
+              </div>
+              {!isScanning && (
+                <Button
+                  onClick={() => setShowManualInput(false)}
+                  variant="ghost"
+                  size="sm"
+                  className="w-full mt-2 text-xs"
+                >
+                  Close Manual Input
+                </Button>
+              )}
+            </motion.div>
           )}
         </div>
 

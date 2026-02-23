@@ -262,4 +262,24 @@
   .safe-area-inset {
     padding-bottom: env(safe-area-inset-bottom);
   }
+
+  /* Scanner video optimization */
+  #scanner {
+    image-rendering: sharp-edges;
+    image-rendering: crisp-edges;
+  }
+
+  #scanner video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transform: scaleX(-1);
+    filter: brightness(1.1) contrast(1.2);
+  }
+
+  #scanner canvas {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
 }
