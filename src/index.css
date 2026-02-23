@@ -1,10 +1,10 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Qzero Premium Design System - Light Mode Only */
-
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+/* NexonCart Premium Design System - Light Mode Only */
 
 @layer base {
   :root {
@@ -20,11 +20,11 @@
     --popover: 0 0% 100%;
     --popover-foreground: 210 25% 15%;
 
-    /* Primary - Premium Teal */
-    --primary: 174 72% 40%;
+    /* Primary - Bright Mint */
+    --primary: 152 60% 48%;
     --primary-foreground: 0 0% 100%;
-    --primary-light: 174 72% 95%;
-    --primary-glow: 174 72% 50%;
+    --primary-light: 152 60% 95%;
+    --primary-glow: 152 60% 60%;
 
     /* Secondary - Soft Blue Gray */
     --secondary: 210 20% 96%;
@@ -56,7 +56,7 @@
     /* UI Elements */
     --border: 210 20% 90%;
     --input: 210 20% 92%;
-    --ring: 174 72% 40%;
+    --ring: 152 60% 48%;
 
     --radius: 1rem;
 
@@ -66,26 +66,28 @@
     --glass-shadow: 210 25% 15% / 0.08;
 
     /* Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(174 72% 40%), hsl(180 65% 50%));
-    --gradient-accent: linear-gradient(135deg, hsl(12 90% 60%), hsl(25 95% 55%));
-    --gradient-hero: linear-gradient(180deg, hsl(200 20% 98%) 0%, hsl(174 72% 95%) 100%);
+    --gradient-primary: linear-gradient(135deg, hsl(152 60% 48%), hsl(165 55% 62%));
+    --gradient-accent: linear-gradient(135deg, hsl(12 90% 60%), hsl(28 95% 55%));
+    --gradient-hero: linear-gradient(180deg, hsl(200 20% 98%) 0%, hsl(152 60% 95%) 100%);
+    /* Shop-specific background gradient (brighter mint shades) */
+    --shop-gradient: linear-gradient(180deg, hsl(152 60% 98%) 0%, hsl(152 60% 95%) 35%, hsl(165 55% 98%) 100%);
     --gradient-card: linear-gradient(145deg, hsl(0 0% 100%) 0%, hsl(210 20% 98%) 100%);
 
     /* Shadows */
     --shadow-sm: 0 2px 8px hsl(210 25% 15% / 0.06);
     --shadow-md: 0 4px 20px hsl(210 25% 15% / 0.1);
     --shadow-lg: 0 8px 40px hsl(210 25% 15% / 0.12);
-    --shadow-glow: 0 0 40px hsl(174 72% 40% / 0.3);
+    --shadow-glow: 0 0 48px hsl(152 60% 48% / 0.28);
 
     /* Sidebar (keeping for compatibility) */
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 210 25% 25%;
-    --sidebar-primary: 174 72% 40%;
+    --sidebar-primary: 152 60% 48%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 210 20% 96%;
     --sidebar-accent-foreground: 210 25% 25%;
     --sidebar-border: 210 20% 90%;
-    --sidebar-ring: 174 72% 40%;
+    --sidebar-ring: 152 60% 48%;
   }
 }
 
@@ -127,7 +129,7 @@
 
   .btn-primary:hover {
     transform: translateY(-2px);
-    box-shadow: var(--shadow-lg), 0 0 50px hsl(174 72% 40% / 0.4);
+    box-shadow: var(--shadow-lg), 0 0 50px hsl(134 18% 45% / 0.4);
   }
 
   .btn-primary:active {
@@ -158,7 +160,7 @@
 
   .input-premium:focus {
     @apply outline-none border-primary bg-card;
-    box-shadow: 0 0 0 4px hsl(174 72% 40% / 0.1);
+    box-shadow: 0 0 0 4px hsl(134 18% 45% / 0.1);
   }
 
   /* Badge Styles */
@@ -221,6 +223,25 @@
     background-size: 200% 100%;
     animation: shimmer 1.5s infinite;
   }
+
+  /* Page background for Shop: gentle mint gradient with subtle texture */
+  .shop-background {
+    background: var(--shop-gradient);
+    /* keep existing body gradient fallback when outside shop */
+    background-attachment: fixed;
+  }
+
+  /* Splash Loader styles */
+  .splash-overlay {
+    background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(245,255,250,0.96));
+    backdrop-filter: blur(6px);
+  }
+  .splash-video {
+    max-width: 640px;
+    max-height: 90vh;
+  }
+
+  /* safe area helper already exists: .safe-area-inset (adds bottom padding) */
 }
 
 @layer utilities {

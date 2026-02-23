@@ -1,4 +1,4 @@
-// Core Types for Qzero
+// Core Types for NexonCart
 
 export interface Product {
   id: string;
@@ -31,7 +31,7 @@ export interface Transaction {
   id: string;
   sessionId: string;
   amount: number;
-  paymentMethod: 'upi';
+  paymentMethod: 'upi' | 'card' | 'netbanking' | 'cash';
   paymentId: string;
   status: 'pending' | 'completed' | 'failed';
   timestamp: Date;

@@ -1,3 +1,4 @@
+import React, { useEffect, useState } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -12,30 +13,53 @@ import Guard from "./pages/Guard";
 import NotFound from "./pages/NotFound";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
+import AIAssistant from "@/components/AIAssistant";
+import SplashLoader from '@/components/SplashLoader';
+import LanguageSwitcher from "@/components/LanguageSwitcher";
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Landing />} />
-          <Route path="/shop" element={<Shop />} />
-          <Route path="/signup" element={<Signup />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/payment" element={<Payment />} />
-          <Route path="/exit" element={<ExitPass />} />
-          <Route path="/admin" element={<Admin />} />
-          <Route path="/guard" element={<Guard />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+const App = () => {
+  const [profile, setProfile] = useState<any>(null);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('nexoncart_profile');
+      if (raw) setProfile(JSON.parse(raw));
+    } catch {}
+  }, []);
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <SplashLoader videoSrc="/NexonCartvideo.mp4" minMs={5000} />
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Landing />} />
+            <Route path="/shop" element={<Shop />} />
+            <Route path="/signup" element={<Signup />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/payment" element={<Payment />} />
+            <Route path="/exit" element={<ExitPass />} />
+            <Route path="/admin" element={<Admin />} />
+            <Route path="/guard" element={<Guard />} />
+            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+
+        {/* show language switcher and assistant across all pages when a profile exists */}
+        <LanguageSwitcher />
+        {profile && (
+          <div className="fixed bottom-6 left-6 z-50">
+            <AIAssistant user={profile} inline dropUp />
+          </div>
+        )}
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;

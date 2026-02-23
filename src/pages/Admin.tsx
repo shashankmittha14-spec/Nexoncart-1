@@ -457,10 +457,10 @@ const Admin = () => {
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-2">
               <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
-                <span className="text-primary-foreground font-bold text-lg">Q</span>
+                <span className="text-primary-foreground font-bold text-lg">N</span>
               </div>
               <div>
-                <p className="font-bold text-foreground">Qzero</p>
+                <p className="font-bold text-foreground">NexonCart</p>
                 <p className="text-xs text-muted-foreground">Admin Panel</p>
               </div>
             </div>

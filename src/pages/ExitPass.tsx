@@ -7,6 +7,7 @@ import { useCartStore } from '@/store/cartStore';
 
 const ExitPass = () => {
   const [qrCodeUrl, setQrCodeUrl] = useState('');
+  const [paymentSummary, setPaymentSummary] = useState<any>(null);
   const { getTotalAmount, getTotalItems, sessionId, clearCart } = useCartStore();
   
   const totalAmount = getTotalAmount();
@@ -33,6 +34,34 @@ const ExitPass = () => {
         },
       });
       setQrCodeUrl(url);
+      // Persist transaction record locally for customer's recent history
+      try {
+        const existing = JSON.parse(localStorage.getItem('nexoncart_transactions') || '[]');
+        // include last payment summary if available
+        let lastPayment = null;
+        try {
+          lastPayment = JSON.parse(localStorage.getItem('nexoncart_last_payment') || 'null');
+        } catch {}
+
+        const record: any = {
+          transactionId,
+          amount: totalAmount,
+          items: totalItems,
+          timestamp: new Date().toISOString(),
+        };
+        if (lastPayment) {
+          record.payment = lastPayment;
+          // clear last payment after recording
+          try { localStorage.removeItem('nexoncart_last_payment'); } catch {}
+        }
+        // prepend and keep last 20 records
+        const updated = [record, ...existing].slice(0, 20);
+        localStorage.setItem('nexoncart_transactions', JSON.stringify(updated));
+        // store payment summary in component state for display
+        if (lastPayment) setPaymentSummary(lastPayment);
+      } catch (e) {
+        // ignore
+      }
     };
 
     generateQR();
@@ -104,6 +133,15 @@ const ExitPass = () => {
                 {new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
               </span>
             </div>
+            {/* Payment Method */}
+            {paymentSummary && (
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Payment</span>
+                <span className="font-semibold text-foreground">
+                  {paymentSummary.method === 'upi' ? 'UPI' : paymentSummary.method === 'card' ? 'Card' : paymentSummary.method || 'Method'} {paymentSummary.upi ? `• ${paymentSummary.upi}` : paymentSummary.card ? `• ${paymentSummary.card}` : ''}
+                </span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -133,7 +171,7 @@ const ExitPass = () => {
           <ol className="space-y-2 text-sm text-muted-foreground">
             <li className="flex items-start gap-2">
               <span className="w-5 h-5 rounded-full bg-primary/10 text-primary flex-shrink-0 flex items-center justify-center text-xs font-bold">1</span>
-              <span>Walk to the Qzero exit gate</span>
+              <span>Walk to the NexonCart exit gate</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="w-5 h-5 rounded-full bg-primary/10 text-primary flex-shrink-0 flex items-center justify-center text-xs font-bold">2</span>
@@ -147,14 +185,14 @@ const ExitPass = () => {
         </div>
 
         {/* Home Button */}
-        <Link to="/" onClick={handleNewSession}>
+        <Link to="/shop" onClick={handleNewSession}>
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             className="w-full py-4 rounded-xl border-2 border-primary text-primary font-semibold flex items-center justify-center gap-2"
           >
             <Home className="w-5 h-5" />
-            Back to Home
+            Back to Shop
           </motion.button>
         </Link>
       </motion.div>

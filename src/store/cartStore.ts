@@ -95,7 +95,7 @@ export const useCartStore = create<CartState>()(
       },
     }),
     {
-      name: 'qzero-cart',
+      name: 'nexoncart-cart',
     }
   )
 );

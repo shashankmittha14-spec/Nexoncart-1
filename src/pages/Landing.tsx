@@ -12,14 +12,18 @@ import {
   DropdownMenuItem,
 } from '@/components/ui/dropdown-menu';
 import { useEffect, useState } from 'react';
+import AIAssistant from '@/components/AIAssistant';
+import { useTranslation } from 'react-i18next';
+import { mockProducts } from '@/data/mockProducts';
 
 const Landing = () => {
   const navigate = useNavigate();
   const [profile, setProfile] = useState<{ name?: string; email?: string; phone?: string } | null>(null);
+  const { t } = useTranslation();
 
   useEffect(() => {
     try {
-      const raw = localStorage.getItem('qzero_profile');
+      const raw = localStorage.getItem('nexoncart_profile');
       if (raw) setProfile(JSON.parse(raw));
     } catch (e) {
       // ignore
@@ -28,7 +32,7 @@ const Landing = () => {
 
   const handleLogout = () => {
     try {
-      localStorage.removeItem('qzero_profile');
+      localStorage.removeItem('nexoncart_profile');
       setProfile(null);
     } catch (e) {
       // ignore
@@ -38,31 +42,31 @@ const Landing = () => {
   const features = [
     {
       icon: Scan,
-      title: 'Scan Products',
-      description: 'Simply scan barcodes with your phone camera',
+      titleKey: 'features.scan.title',
+      descriptionKey: 'features.scan.desc',
     },
     {
       icon: ShoppingCart,
-      title: 'Track Cart',
-      description: 'See real-time prices and total as you shop',
+      titleKey: 'features.track.title',
+      descriptionKey: 'features.track.desc',
     },
     {
       icon: CreditCard,
-      title: 'Pay via UPI',
-      description: 'Secure payment with your preferred UPI app',
+      titleKey: 'features.pay.title',
+      descriptionKey: 'features.pay.desc',
     },
     {
       icon: LogOut,
-      title: 'Quick Exit',
-      description: 'Show QR code and walk out - no queues!',
+      titleKey: 'features.exit.title',
+      descriptionKey: 'features.exit.desc',
     },
   ];
 
   const benefits = [
-    { icon: Clock, text: 'Save up to 15 minutes per visit' },
-    { icon: Shield, text: '100% Secure Payments' },
-    { icon: Zap, text: 'Instant Checkout' },
-    { icon: Smartphone, text: 'Works on any smartphone' },
+    { icon: Clock, textKey: 'benefits.b1' },
+    { icon: Shield, textKey: 'benefits.b2' },
+    { icon: Zap, textKey: 'benefits.b3' },
+    { icon: Smartphone, textKey: 'benefits.b4' },
   ];
 
   return (
@@ -71,53 +75,57 @@ const Landing = () => {
       <header className="fixed top-0 left-0 right-0 z-50">
         <div className="glass-card relative mx-4 mt-4 px-6 py-4">
           <div className="absolute inset-0 hidden sm:flex items-center justify-center pointer-events-none">
-            <span className="text-sm font-medium text-muted-foreground">The wait ends here</span>
+            <span className="text-sm font-medium text-muted-foreground">{t('header.wait')}</span>
           </div>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
-                <span className="text-primary-foreground font-bold text-lg">Q</span>
+                <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
+                <span className="text-primary-foreground font-bold text-lg">N</span>
               </div>
-              <span className="text-xl font-bold text-foreground">Qzero</span>
+              <span className="text-xl font-bold text-foreground">NexonCart</span>
             </div>
             <div className="flex items-center gap-3">
               {profile ? (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <button className="flex items-center gap-2">
-                      <Avatar>
-                        <AvatarFallback>{(profile.name || profile.email || profile.phone || 'U').charAt(0)}</AvatarFallback>
-                      </Avatar>
-                    </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-56">
-                    <DropdownMenuLabel>
-                      <div className="font-semibold">{profile.name || 'Customer'}</div>
-                      <div className="text-xs text-muted-foreground">{profile.email || profile.phone}</div>
-                    </DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    <div className="p-2">
-                      <button
-                        onClick={() => navigate('/shop?openBudget=1')}
-                        className="w-full btn-primary py-2 mb-2"
-                      >
-                        Set Budget
+                <>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button className="flex items-center gap-2">
+                        <Avatar>
+                          <AvatarFallback>{(profile.name || profile.email || profile.phone || 'U').charAt(0)}</AvatarFallback>
+                        </Avatar>
                       </button>
-                      <button onClick={handleLogout} className="w-full btn-ghost py-2">
-                        Log out
-                      </button>
-                    </div>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="w-56">
+                      <DropdownMenuLabel>
+                        <div className="font-semibold">{profile.name || t('header.customer')}</div>
+                        <div className="text-xs text-muted-foreground">{profile.email || profile.phone}</div>
+                      </DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                        <div className="p-2">
+                        <button
+                          onClick={() => navigate('/shop?openBudget=1')}
+                          className="w-full btn-primary py-2 mb-2"
+                        >
+                          {t('header.setBudget')}
+                        </button>
+                        <button onClick={handleLogout} className="w-full btn-ghost py-2">
+                          {t('header.logout')}
+                        </button>
+                      </div>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </>
               ) : (
                 <Link to="/signup">
-                  <Button className="btn-primary">Start Shopping</Button>
+                  <Button className="btn-primary">{t('header.startShopping')}</Button>
                 </Link>
               )}
             </div>
           </div>
         </div>
       </header>
+
+      {/* Assistant removed from Landing; rendered globally in App when logged in */}
 
       {/* Hero Section */}
       <section className="pt-32 pb-20 px-4">
@@ -130,19 +138,15 @@ const Landing = () => {
           >
             <div className="inline-flex items-center gap-2 bg-primary-light text-primary px-4 py-2 rounded-full text-sm font-medium mb-6">
               <Zap className="w-4 h-4" />
-              Skip the queue, save your time
+              {t('hero.badge')}
             </div>
             
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-extrabold text-foreground mb-6 leading-tight">
-              The Future of{' '}
-              <span className="text-gradient-primary">Supermarket</span>
-              <br />
-              is Here
+              {t('hero.title')}
             </h1>
-            
+
             <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10">
-              Scan products, track your cart in real-time, pay with UPI, and walk out. 
-              No billing counters. No waiting. Just shopping.
+              {t('hero.subtitle')}
             </p>
 
             
@@ -165,7 +169,7 @@ const Landing = () => {
                       <span className="w-2 h-2 bg-white/80 rounded-full" />
                       <span className="w-2 h-2 bg-white/80 rounded-full" />
                     </div>
-                    <div className="text-[10px]">9:41</div>
+                        <div className="text-[10px]">9:41</div>
                     <div className="flex items-center gap-2">
                       <span className="w-2 h-2 bg-white/80 rounded-full" />
                       <span className="w-2 h-2 bg-white/80 rounded-full" />
@@ -181,8 +185,8 @@ const Landing = () => {
                     {/* Scanning status */}
                     <div className="mt-4 bg-card p-3 rounded-xl shadow-sm">
                       <div className="flex items-center justify-between">
-                        <div className="text-sm font-semibold text-foreground">Scanning barcode...</div>
-                        <div className="text-xs text-muted-foreground">Live</div>
+                        <div className="text-sm font-semibold text-foreground">{t('scanner.scanning')}</div>
+                        <div className="text-xs text-muted-foreground">{t('scanner.live')}</div>
                       </div>
                       <div className="w-full h-2 bg-foreground/5 rounded-full mt-3 overflow-hidden">
                         <div className="h-2 bg-emerald-500 w-1/2 rounded-full" />
@@ -195,12 +199,12 @@ const Landing = () => {
               {/* Items card below phone */}
               <div className="glass-card mt-5 p-6">
                 <div className="flex items-center justify-between">
-                  <h4 className="text-lg font-semibold text-foreground">Items in Cart</h4>
+                  <h4 className="text-lg font-semibold text-foreground">{t('scanner.itemsInCart')}</h4>
                   <span className="text-sm text-accent font-semibold">5</span>
                 </div>
 
                 <div className="mt-4 flex items-center justify-between">
-                  <div className="text-sm text-muted-foreground">Total Amount</div>
+                  <div className="text-sm text-muted-foreground">{t('scanner.totalAmount')}</div>
                   <div className="text-2xl font-bold text-gradient-primary">₹1,245</div>
                 </div>
 
@@ -208,13 +212,14 @@ const Landing = () => {
                   <div className="h-2 bg-emerald-500 w-3/4 rounded-full" />
                 </div>
 
-                <div className="text-sm text-muted-foreground mt-2">Budget: ₹1,245 / ₹2,000</div>
+                <div className="text-sm text-muted-foreground mt-2">{t('scanner.budget', { current: '₹1,245', limit: '₹2,000' })}</div>
               </div>
             </div>
 
             {/* Decorative Elements */}
             <div className="absolute -z-10 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-primary/10 rounded-full blur-3xl" />
           </motion.div>
+          {/* Categories removed from Landing — moved to Shop page */}
         </div>
       </section>
 
@@ -227,16 +232,16 @@ const Landing = () => {
             viewport={{ once: true }}
             className="text-center mb-16"
           >
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-              How Qzero Works
+              <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
+              {t('how.title')}
             </h2>
             <p className="text-muted-foreground text-lg max-w-xl mx-auto">
-              Four simple steps to a queue-free shopping experience
+              {t('how.subtitle')}
             </p>
           </motion.div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {features.map((feature, index) => (
+              {features.map((feature, index) => (
               <motion.div
                 key={feature.title}
                 initial={{ opacity: 0, y: 20 }}
@@ -248,9 +253,9 @@ const Landing = () => {
                 <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-primary/10 flex items-center justify-center group-hover:bg-primary group-hover:text-primary-foreground transition-colors duration-300">
                   <feature.icon className="w-8 h-8 text-primary group-hover:text-primary-foreground transition-colors duration-300" />
                 </div>
-                <div className="text-sm font-semibold text-primary mb-2">Step {index + 1}</div>
-                <h3 className="text-xl font-bold text-foreground mb-2">{feature.title}</h3>
-                <p className="text-muted-foreground">{feature.description}</p>
+                <div className="text-sm font-semibold text-primary mb-2">{t('step', { n: index + 1 })}</div>
+                <h3 className="text-xl font-bold text-foreground mb-2">{t(feature.titleKey)}</h3>
+                <p className="text-muted-foreground">{t(feature.descriptionKey)}</p>
               </motion.div>
             ))}
           </div>
@@ -274,7 +279,7 @@ const Landing = () => {
                   <div className="w-12 h-12 mx-auto mb-3 rounded-xl bg-accent/10 flex items-center justify-center">
                     <benefit.icon className="w-6 h-6 text-accent" />
                   </div>
-                  <p className="text-sm md:text-base font-medium text-foreground">{benefit.text}</p>
+                  <p className="text-sm md:text-base font-medium text-foreground">{t(benefit.textKey)}</p>
                 </motion.div>
               ))}
             </div>
@@ -292,18 +297,18 @@ const Landing = () => {
             className="text-center glass-card p-8 md:p-12"
           >
             <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-              Ready to Skip the Queue?
+              {t('ctaFull.title')}
             </h2>
             <p className="text-muted-foreground text-lg mb-8">
-              Join thousands of smart shoppers who save time every day
+              {t('ctaFull.subtitle')}
             </p>
             <Link to="/signup">
-              <motion.button
+                <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 className="btn-primary text-lg px-10 py-4"
               >
-                Start your first session with Qzero
+                {t('ctaFull.button')}
               </motion.button>
             </Link>
           </motion.div>
@@ -316,19 +321,17 @@ const Landing = () => {
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-                <span className="text-primary-foreground font-bold text-sm">Q</span>
+                <span className="text-primary-foreground font-bold text-sm">N</span>
               </div>
-              <span className="font-semibold text-foreground">Qzero</span>
+              <span className="font-semibold text-foreground">NexonCart</span>
             </div>
-            <p className="text-sm text-muted-foreground">
-              © 2026 Qzero. Revolutionizing supermarket checkout.
-            </p>
+            <p className="text-sm text-muted-foreground">{t('footer.copyright')}</p>
             <div className="flex items-center gap-6">
               <Link to="/login?role=admin" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                Admin
+                {t('footer.admin')}
               </Link>
               <Link to="/login?role=guard" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                Guard Portal
+                {t('footer.guard')}
               </Link>
             </div>
           </div>
