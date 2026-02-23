@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import AIAssistant from '@/components/AIAssistant';
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -697,6 +698,13 @@ const Shop = () => {
           </>
         )}
       </AnimatePresence>
+
+      {/* AI Assistant - Shop page only */}
+      {profile && (
+        <div className="fixed bottom-6 left-6 z-50">
+          <AIAssistant user={profile} inline dropUp />
+        </div>
+      )}
     </div>
   );
 };

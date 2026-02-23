@@ -82,6 +82,24 @@ export const mockProducts: Product[] = [
     category: 'Stationery',
     stock: 150,
   },
+  {
+    id: '18',
+    name: 'Notebook 200 Pages',
+    price: 150,
+    barcode: '8901234567901',
+    image: '/barcode-notebook-200.svg',
+    category: 'Stationery',
+    stock: 25,
+  },
+  {
+    id: '19',
+    name: 'Water Bottle 1L',
+    price: 250,
+    barcode: '8901234567918',
+    image: '/barcode-bottle-1l.svg',
+    category: 'Beverages',
+    stock: 40,
+  },
 ];
 
 export const findProductByBarcode = (barcode: string): Product | undefined => {
