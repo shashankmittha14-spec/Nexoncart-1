@@ -153,6 +153,7 @@ const Shop = () => {
           aspectRatio: 1.0
         },
         (decodedText) => {
+          console.log('Scanner decoded:', decodedText);
           handleBarcodeDetected(decodedText);
         },
         (errorMessage) => {
@@ -181,7 +182,9 @@ const Shop = () => {
   }, []);
 
   const handleBarcodeDetected = useCallback((barcode: string) => {
-    const product = findProductByBarcode(barcode);
+    const cleaned = String(barcode || '').trim();
+    console.log('Handling barcode:', cleaned);
+    const product = findProductByBarcode(cleaned);
     if (product) {
       addItem(product);
       toast.success(`Added ${product.name} to cart`, {
@@ -190,7 +193,7 @@ const Shop = () => {
       setManualBarcodeInput('');
     } else {
       toast.error('Product not found', {
-        description: `Barcode ${barcode} not in system`,
+        description: `Barcode ${cleaned} not in system`,
       });
     }
   }, [addItem]);
@@ -406,6 +409,34 @@ const Shop = () => {
               {t('shop.stopScanner')}
             </Button>
           )}
+
+          {/* Test barcode image (dev helper) */}
+          <div className="mt-3">
+            <Button
+              onClick={async () => {
+                try {
+                  const res = await fetch('/barcode-bottle-1l.svg');
+                  const txt = await res.text();
+                  // extract first long digit sequence
+                  const m = txt.match(/\d{8,}/);
+                  if (m) {
+                    const found = m[0];
+                    console.log('Extracted from SVG:', found);
+                    handleBarcodeDetected(found);
+                  } else {
+                    toast.error('No barcode digits found in SVG');
+                  }
+                } catch (e) {
+                  console.error(e);
+                  toast.error('Failed to load barcode image');
+                }
+              }}
+              variant="ghost"
+              size="sm"
+            >
+              Test barcode image
+            </Button>
+          </div>
 
           {/* Manual Barcode Input */}
           {showManualInput && (

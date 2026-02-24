@@ -102,6 +102,26 @@ export const mockProducts: Product[] = [
   },
 ];
 
+const normalizeBarcode = (b: string) => {
+  if (!b) return '';
+  // remove whitespace and non-digit characters
+  return String(b).replace(/\s+/g, '').replace(/\D/g, '');
+};
+
 export const findProductByBarcode = (barcode: string): Product | undefined => {
-  return mockProducts.find((p) => p.barcode === barcode);
+  const clean = normalizeBarcode(barcode);
+  if (!clean) return undefined;
+
+  // Try exact match first
+  let found = mockProducts.find((p) => p.barcode === clean);
+  if (found) return found;
+
+  // Some scanners may return extra leading/trailing digits or prefixes — try suffix match
+  found = mockProducts.find((p) => clean.endsWith(p.barcode) || p.barcode.endsWith(clean));
+  if (found) return found;
+
+  // As a last resort, try matching by removing leading zeros from both
+  const strip = (s: string) => s.replace(/^0+/, '');
+  found = mockProducts.find((p) => strip(p.barcode) === strip(clean));
+  return found;
 };
