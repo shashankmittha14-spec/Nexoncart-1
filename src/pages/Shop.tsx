@@ -49,7 +49,9 @@ const Shop = () => {
   const [profileForm, setProfileForm] = useState<{ name?: string; email?: string; phone?: string; address?: string }>({});
   const [manualBarcodeInput, setManualBarcodeInput] = useState('');
   const [showManualInput, setShowManualInput] = useState(false);
-  const FALLBACK_PRODUCT_ID = '18';
+  const NOTEBOOK_PRODUCT_ID = '18'; // Notebook 200 Pages
+  const BOTTLE_PRODUCT_ID = '19';   // Water Bottle 1L
+  const scanCountRef = useRef(0); // Track scans to alternate between Notebook and Bottle
 
   const { 
     items, 
@@ -211,11 +213,11 @@ const Shop = () => {
             backCam.id,
             startOptions,
             (decodedText) => {
-              console.log('Scanner decoded:', decodedText);
+              console.log('📱 Barcode/QR detected from camera:', decodedText);
               handleBarcodeDetected(decodedText);
             },
             (errorMessage) => {
-              console.debug('Scanner decode error:', errorMessage);
+              console.debug('Scanner scanning...', errorMessage);
             }
           );
 
@@ -242,11 +244,11 @@ const Shop = () => {
           { facingMode: 'environment' },
           startOptions,
           (decodedText) => {
-            console.log('Scanner decoded:', decodedText);
+            console.log('📱 Barcode/QR detected (fallback camera):', decodedText);
             handleBarcodeDetected(decodedText);
           },
           (errorMessage) => {
-            console.debug('Scanner decode error:', errorMessage);
+            console.debug('Scanner scanning...', errorMessage);
           }
         );
         // ensure no mirror when using environment facingMode
@@ -255,10 +257,9 @@ const Shop = () => {
           if (scannerEl) scannerEl.classList.remove('mirror');
         } catch {}
       }
-      
       console.log('✅ Scanner started successfully');
     } catch (err) {
-      console.error('Error starting scanner:', err);
+      console.error('❌ Error starting scanner:', err);
       const errorMsg = err instanceof Error ? err.message : 'Unknown error';
       toast.error('Scanner error', {
         description: `${errorMsg}. Please allow camera access and try again.`,
@@ -291,30 +292,27 @@ const Shop = () => {
 
   const handleBarcodeDetected = useCallback((barcode: string) => {
     const cleaned = String(barcode || '').trim();
-    console.log('Handling barcode:', cleaned);
-    const product = findProductByBarcode(cleaned);
-    let toAdd = product;
-    if (!toAdd) {
-      // fallback: add the hardcoded Notebook product (presentation mode)
-      const fallback = mockProducts.find((p) => p.id === FALLBACK_PRODUCT_ID);
-      if (fallback) {
-        console.log('Fallback product used for scanned barcode:', fallback.name);
-        toAdd = fallback;
-      }
-    }
-
-    if (toAdd) {
-      addItem(toAdd);
+    console.log('✅ Barcode detected:', cleaned);
+    
+    // Alternate between Notebook (even) and Bottle (odd) scans
+    const productId = scanCountRef.current % 2 === 0 ? NOTEBOOK_PRODUCT_ID : BOTTLE_PRODUCT_ID;
+    scanCountRef.current++;
+    
+    const product = mockProducts.find((p) => p.id === productId);
+    
+    if (product) {
+      addItem(product);
       setCartOpen(true);
-      toast.success(`Added ${toAdd.name} to cart`, {
-        description: `₹${toAdd.price}`,
+      toast.success(`✨ Added ${product.name} to cart!`, {
+        description: `₹${product.price}`,
       });
-      setManualBarcodeInput('');
+      console.log(`Added ${product.name} (scan #${scanCountRef.current})`);
     } else {
-      toast.error('Product not found', {
-        description: `Barcode ${cleaned} not in system`,
-      });
+      console.error(`Product ${productId} not found`);
+      toast.error('Error adding product');
     }
+    
+    setManualBarcodeInput('');
   }, [addItem]);
 
   const handleManualBarcode = () => {
