@@ -29,6 +29,7 @@ import { findProductByBarcode, mockProducts } from '@/data/mockProducts';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
+import ThemeToggle from '@/components/ThemeToggle';
 
 const Shop = () => {
   const navigate = useNavigate();
@@ -231,6 +232,23 @@ const Shop = () => {
       }
 
       const html5QrCode = new Html5Qrcode('scanner');
+
+      // Detect mobile viewport to tune scanner options (larger scan box, lower fps)
+      const isMobileView = typeof navigator !== 'undefined' && /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent || '') || (typeof window !== 'undefined' && window.innerWidth && window.innerWidth < 720);
+      const desktopOptions = {
+        fps: 10,
+        // do not restrict qrbox — scan whole frame (better for barcodes)
+        // qrbox: undefined,
+        disableFlip: true,
+        aspectRatio: 1.0,
+      };
+      const mobileOptions = {
+        fps: 8,
+        disableFlip: true,
+        aspectRatio: 1.0,
+        qrbox: typeof window !== 'undefined' ? Math.round(Math.min(window.innerWidth, window.innerHeight) * 0.75) : undefined,
+      };
+      const startOptions = isMobileView ? mobileOptions : desktopOptions;
       scannerRef.current = html5QrCode;
 
       // Preferred: ask html5-qrcode for cameras (works on most browsers)
@@ -239,18 +257,12 @@ const Shop = () => {
         const cameras = await Html5Qrcode.getCameras();
         console.log('Html5Qrcode.getCameras ->', cameras);
         if (cameras && cameras.length > 0) {
-          // Prefer a back camera if labelled
-          const backCam = cameras.find((c) => /back|rear|environment/i.test(c.label || '')) || cameras[0];
+          // Prefer a back camera if labelled; otherwise prefer the last camera (often rear on phones)
+          const backCam = cameras.find((c) => /back|rear|environment/i.test(c.label || '')) || cameras[cameras.length - 1] || cameras[0];
           console.log('Starting scanner on camera:', backCam);
           await html5QrCode.start(
             backCam.id,
-            {
-              fps: 10,
-              // do not restrict qrbox — scan whole frame (better for barcodes)
-              // qrbox: undefined,
-              disableFlip: false,
-              aspectRatio: 1.0,
-            },
+            startOptions,
             (decodedText) => {
               console.log('Scanner decoded:', decodedText);
               handleBarcodeDetected(decodedText);
@@ -259,6 +271,17 @@ const Shop = () => {
               console.debug('Scanner decode error:', errorMessage);
             }
           );
+
+          // If camera label suggests front camera, mirror the video; otherwise ensure no mirror
+          try {
+            const scannerEl = document.getElementById('scanner');
+            const isFront = /front|user/i.test(backCam.label || '');
+            if (scannerEl) {
+              if (isFront) scannerEl.classList.add('mirror');
+              else scannerEl.classList.remove('mirror');
+            }
+          } catch {}
+
           started = true;
         }
       } catch (camErr) {
@@ -270,11 +293,7 @@ const Shop = () => {
         // final fallback: attempt to start with facingMode config
         await html5QrCode.start(
           { facingMode: 'environment' },
-          {
-            fps: 10,
-            disableFlip: false,
-            aspectRatio: 1.0,
-          },
+          startOptions,
           (decodedText) => {
             console.log('Scanner decoded:', decodedText);
             handleBarcodeDetected(decodedText);
@@ -283,6 +302,11 @@ const Shop = () => {
             console.debug('Scanner decode error:', errorMessage);
           }
         );
+        // ensure no mirror when using environment facingMode
+        try {
+          const scannerEl = document.getElementById('scanner');
+          if (scannerEl) scannerEl.classList.remove('mirror');
+        } catch {}
       }
       
       console.log('✅ Scanner started successfully');
@@ -401,6 +425,9 @@ const Shop = () => {
               <span className="font-semibold text-foreground">NexonCart</span>
             </div>
             <div className="flex items-center gap-2">
+              <div className="mr-2">
+                <ThemeToggle />
+              </div>
               {profile ? (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>

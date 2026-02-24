@@ -52,7 +52,6 @@ const App = () => {
 
         {/* show language switcher across all pages when a profile exists */}
         <LanguageSwitcher />
-        <ThemeToggle />
       </TooltipProvider>
     </QueryClientProvider>
   );

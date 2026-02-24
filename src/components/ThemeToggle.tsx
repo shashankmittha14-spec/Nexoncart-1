@@ -76,7 +76,7 @@ const ThemeToggle: React.FC = () => {
   }
 
   return (
-    <div className="fixed top-4 right-20 z-50">
+    <div>
       <button
         onClick={toggle}
         aria-label="Toggle theme"
