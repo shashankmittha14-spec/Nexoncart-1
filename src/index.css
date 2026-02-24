@@ -91,6 +91,74 @@
   }
 }
 
+/* Black (true dark) theme variables — applied when `data-theme="dark"` is set on <html> */
+@layer base {
+  [data-theme="dark"] {
+    --background: 0 0% 0%;
+    --foreground: 0 0% 100%;
+
+    --card: 0 0% 6%;
+    --card-foreground: 0 0% 100%;
+
+    --popover: 0 0% 6%;
+    --popover-foreground: 0 0% 100%;
+
+    --primary: 152 60% 48%;
+    --primary-foreground: 0 0% 100%;
+    --primary-light: 152 60% 18%;
+
+    --secondary: 0 0% 6%;
+    --secondary-foreground: 0 0% 92%;
+
+    --muted: 0 0% 6%;
+    --muted-foreground: 0 0% 72%;
+
+    --accent: 12 90% 60%;
+    --accent-foreground: 0 0% 100%;
+    --accent-light: 12 90% 18%;
+
+    --success: 152 60% 45%;
+    --success-foreground: 0 0% 100%;
+    --success-light: 152 60% 18%;
+
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+    --warning-light: 38 92% 18%;
+
+    --destructive: 0 72% 55%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 0 0% 12%;
+    --input: 0 0% 8%;
+    --ring: 152 60% 48%;
+
+    --radius: 1rem;
+
+    --glass-bg: 0 0% 6% / 0.6;
+    --glass-border: 0 0% 8% / 0.6;
+    --glass-shadow: 0 0% 0% / 0.6;
+
+    --gradient-primary: linear-gradient(135deg, hsl(152 60% 48%), hsl(165 55% 62%));
+    --gradient-accent: linear-gradient(135deg, hsl(12 90% 60%), hsl(28 95% 55%));
+    --gradient-hero: linear-gradient(180deg, hsl(0 0% 0%) 0%, hsl(210 14% 4%) 100%);
+    --shop-gradient: linear-gradient(180deg, hsl(0 0% 0%) 0%, hsl(210 14% 4%) 35%, hsl(210 14% 6%) 100%);
+
+    --shadow-sm: 0 2px 8px rgba(0,0,0,0.8);
+    --shadow-md: 0 6px 24px rgba(0,0,0,0.85);
+    --shadow-lg: 0 10px 40px rgba(0,0,0,0.9);
+    --shadow-glow: 0 0 48px hsl(152 60% 48% / 0.08);
+
+    --sidebar-background: 0 0% 6%;
+    --sidebar-foreground: 0 0% 92%;
+    --sidebar-primary: 152 60% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 0 0% 6%;
+    --sidebar-accent-foreground: 0 0% 92%;
+    --sidebar-border: 0 0% 12%;
+    --sidebar-ring: 152 60% 48%;
+  }
+}
+
 @layer base {
   * {
     @apply border-border;

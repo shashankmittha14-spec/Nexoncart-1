@@ -15,6 +15,7 @@ import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import SplashLoader from '@/components/SplashLoader';
 import LanguageSwitcher from "@/components/LanguageSwitcher";
+import ThemeToggle from '@/components/ThemeToggle';
 
 const queryClient = new QueryClient();
 
@@ -51,6 +52,7 @@ const App = () => {
 
         {/* show language switcher across all pages when a profile exists */}
         <LanguageSwitcher />
+        <ThemeToggle />
       </TooltipProvider>
     </QueryClientProvider>
   );

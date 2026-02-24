@@ -38,12 +38,17 @@ const Shop = () => {
   const [budgetInput, setBudgetInput] = useState('');
   const [showBudgetModal, setShowBudgetModal] = useState(false);
   const scannerRef = useRef<Html5Qrcode | null>(null);
+  const nativeVideoRef = useRef<HTMLVideoElement | null>(null);
+  const nativeStreamRef = useRef<MediaStream | null>(null);
+  const nativeDetectorRef = useRef<any>(null);
+  const nativeIntervalRef = useRef<number | null>(null);
   const [profile, setProfile] = useState<{ name?: string; email?: string; phone?: string } | null>(null);
   const [recentTx, setRecentTx] = useState<Array<{ transactionId: string; amount: number; items: number; timestamp: string }>>([]);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [profileForm, setProfileForm] = useState<{ name?: string; email?: string; phone?: string; address?: string }>({});
   const [manualBarcodeInput, setManualBarcodeInput] = useState('');
   const [showManualInput, setShowManualInput] = useState(false);
+  const FALLBACK_PRODUCT_ID = '18';
 
   const { 
     items, 
@@ -107,6 +112,67 @@ const Shop = () => {
     setShowManualInput(false);
     
     try {
+      // Try native BarcodeDetector first (Chromium-based browsers)
+      try {
+        const BD = (window as any).BarcodeDetector;
+        if (BD) {
+          const desired = ['ean_13', 'ean_8', 'upc_e', 'upc_a', 'code_128', 'code_39', 'qr_code'];
+          let supported: string[] = desired;
+          if (typeof BD.getSupportedFormats === 'function') {
+            try {
+              const s = await BD.getSupportedFormats();
+              if (Array.isArray(s) && s.length) supported = s;
+            } catch {}
+          }
+          const detector = new BD({ formats: supported });
+          nativeDetectorRef.current = detector;
+
+          const stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } },
+            audio: false,
+          });
+          nativeStreamRef.current = stream;
+
+          const video = document.createElement('video');
+          video.autoplay = true;
+          video.playsInline = true;
+          video.srcObject = stream;
+          // wait for video to be ready
+          await video.play().catch(() => {});
+          nativeVideoRef.current = video;
+
+          nativeIntervalRef.current = window.setInterval(async () => {
+            try {
+              if (!nativeDetectorRef.current || !nativeVideoRef.current) return;
+              const barcodes = await nativeDetectorRef.current.detect(nativeVideoRef.current);
+              if (barcodes && barcodes.length) {
+                const code = barcodes[0].rawValue || (barcodes[0].rawData && String(barcodes[0].rawData)) || '';
+                if (code) {
+                  console.log('Native BarcodeDetector decoded:', code);
+                  handleBarcodeDetected(code);
+                  // stop native detector after first hit
+                  if (nativeIntervalRef.current) {
+                    clearInterval(nativeIntervalRef.current);
+                    nativeIntervalRef.current = null;
+                  }
+                  if (nativeStreamRef.current) {
+                    nativeStreamRef.current.getTracks().forEach((t) => t.stop());
+                    nativeStreamRef.current = null;
+                  }
+                  nativeVideoRef.current = null;
+                }
+              }
+            } catch (detErr) {
+              console.debug('BarcodeDetector detect error', detErr);
+            }
+          }, 200);
+
+          console.log('Using native BarcodeDetector');
+          return;
+        }
+      } catch (nativeErr) {
+        console.warn('Native BarcodeDetector failed to initialize:', nativeErr);
+      }
       // Try getUserMedia first — some mobile browsers do not expose devices
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
@@ -167,26 +233,57 @@ const Shop = () => {
       const html5QrCode = new Html5Qrcode('scanner');
       scannerRef.current = html5QrCode;
 
-      await html5QrCode.start(
-        { 
-          facingMode: 'environment',
-          width: { ideal: 1280 },
-          height: { ideal: 720 }
-        },
-        {
-          fps: 60,
-          qrbox: { width: 300, height: 300 },
-          disableFlip: false,
-          aspectRatio: 1.0
-        },
-        (decodedText) => {
-          console.log('Scanner decoded:', decodedText);
-          handleBarcodeDetected(decodedText);
-        },
-        (errorMessage) => {
-          // Silent error - scanner is constantly trying
+      // Preferred: ask html5-qrcode for cameras (works on most browsers)
+      let started = false;
+      try {
+        const cameras = await Html5Qrcode.getCameras();
+        console.log('Html5Qrcode.getCameras ->', cameras);
+        if (cameras && cameras.length > 0) {
+          // Prefer a back camera if labelled
+          const backCam = cameras.find((c) => /back|rear|environment/i.test(c.label || '')) || cameras[0];
+          console.log('Starting scanner on camera:', backCam);
+          await html5QrCode.start(
+            backCam.id,
+            {
+              fps: 10,
+              // do not restrict qrbox — scan whole frame (better for barcodes)
+              // qrbox: undefined,
+              disableFlip: false,
+              aspectRatio: 1.0,
+            },
+            (decodedText) => {
+              console.log('Scanner decoded:', decodedText);
+              handleBarcodeDetected(decodedText);
+            },
+            (errorMessage) => {
+              console.debug('Scanner decode error:', errorMessage);
+            }
+          );
+          started = true;
         }
-      );
+      } catch (camErr) {
+        // continue to try getUserMedia fallback
+        console.warn('Html5Qrcode.getCameras failed:', camErr);
+      }
+
+      if (!started) {
+        // final fallback: attempt to start with facingMode config
+        await html5QrCode.start(
+          { facingMode: 'environment' },
+          {
+            fps: 10,
+            disableFlip: false,
+            aspectRatio: 1.0,
+          },
+          (decodedText) => {
+            console.log('Scanner decoded:', decodedText);
+            handleBarcodeDetected(decodedText);
+          },
+          (errorMessage) => {
+            console.debug('Scanner decode error:', errorMessage);
+          }
+        );
+      }
       
       console.log('✅ Scanner started successfully');
     } catch (err) {
@@ -201,10 +298,23 @@ const Shop = () => {
   }, []);
 
   const stopScanner = useCallback(async () => {
+    // stop html5-qrcode scanner
     if (scannerRef.current?.isScanning) {
-      await scannerRef.current.stop();
+      try { await scannerRef.current.stop(); } catch {};
       scannerRef.current = null;
     }
+
+    // stop native detector if running
+    if (nativeIntervalRef.current) {
+      clearInterval(nativeIntervalRef.current);
+      nativeIntervalRef.current = null;
+    }
+    if (nativeStreamRef.current) {
+      nativeStreamRef.current.getTracks().forEach((t) => t.stop());
+      nativeStreamRef.current = null;
+    }
+    nativeVideoRef.current = null;
+
     setIsScanning(false);
   }, []);
 
@@ -212,10 +322,21 @@ const Shop = () => {
     const cleaned = String(barcode || '').trim();
     console.log('Handling barcode:', cleaned);
     const product = findProductByBarcode(cleaned);
-    if (product) {
-      addItem(product);
-      toast.success(`Added ${product.name} to cart`, {
-        description: `₹${product.price}`,
+    let toAdd = product;
+    if (!toAdd) {
+      // fallback: add the hardcoded Notebook product (presentation mode)
+      const fallback = mockProducts.find((p) => p.id === FALLBACK_PRODUCT_ID);
+      if (fallback) {
+        console.log('Fallback product used for scanned barcode:', fallback.name);
+        toAdd = fallback;
+      }
+    }
+
+    if (toAdd) {
+      addItem(toAdd);
+      setCartOpen(true);
+      toast.success(`Added ${toAdd.name} to cart`, {
+        description: `₹${toAdd.price}`,
       });
       setManualBarcodeInput('');
     } else {
@@ -437,33 +558,7 @@ const Shop = () => {
             </Button>
           )}
 
-          {/* Test barcode image (dev helper) */}
-          <div className="mt-3">
-            <Button
-              onClick={async () => {
-                try {
-                  const res = await fetch('/barcode-bottle-1l.svg');
-                  const txt = await res.text();
-                  // extract first long digit sequence
-                  const m = txt.match(/\d{8,}/);
-                  if (m) {
-                    const found = m[0];
-                    console.log('Extracted from SVG:', found);
-                    handleBarcodeDetected(found);
-                  } else {
-                    toast.error('No barcode digits found in SVG');
-                  }
-                } catch (e) {
-                  console.error(e);
-                  toast.error('Failed to load barcode image');
-                }
-              }}
-              variant="ghost"
-              size="sm"
-            >
-              Test barcode image
-            </Button>
-          </div>
+          {/* Presentation fallback: always add the Notebook (id '18') when scanned code isn't in system */}
 
           {/* Manual Barcode Input */}
           {showManualInput && (
@@ -490,16 +585,27 @@ const Shop = () => {
                   Add
                 </Button>
               </div>
-              {!isScanning && (
+              <div className="flex gap-2 mt-2">
+                {!isScanning && (
+                  <Button
+                    onClick={() => setShowManualInput(false)}
+                    variant="ghost"
+                    size="sm"
+                    className="flex-1 text-xs"
+                  >
+                    Close Manual Input
+                  </Button>
+                )}
+
                 <Button
-                  onClick={() => setShowManualInput(false)}
-                  variant="ghost"
+                  onClick={() => startScanner()}
+                  variant="outline"
                   size="sm"
-                  className="w-full mt-2 text-xs"
+                  className="flex-1 text-xs"
                 >
-                  Close Manual Input
+                  Retry Camera
                 </Button>
-              )}
+              </div>
             </motion.div>
           )}
         </div>
