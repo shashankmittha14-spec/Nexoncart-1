@@ -4,14 +4,14 @@ import { Mic, X, Send } from 'lucide-react';
 import { assistantSamples } from '@/data/assistantSamples';
 
 const detectLanguage = (text: string) => {
-  // If the text contains Devanagari characters, treat as Hindi
+  // If the text contains Devanagari characters, it's definitely Hindi
   if (/[\u0900-\u097F]/.test(text)) return 'hi-IN';
 
   // Detect common Hindi words typed in Latin script (Hinglish)
-  const hindiLatinPattern = /\b(kya|kaise|kahan|kyon|kyu|nahi|nahin|hai|hain|ho|tum|aap|mera|meri|ka|ke|ki|kuch|dhanyavaad|shukriya|namaste)\b/i;
-  if (hindiLatinPattern.test(text)) return 'hi-IN';
+  const hinglishPattern = /\b(kya|kaise|kahan|kyon|kyu|nahi|nahin|hai|hain|ho|tum|aap|mera|meri|mere|ka|ke|ki|kuch|main|mein|dhanyavaad|shukriya|namaste|helo|hi|kaise|kya|help|scan|payment|barcode|qr|product|cart|budget|transaction)\b/i;
+  if (hinglishPattern.test(text)) return 'hi-IN';
 
-  // Fallback to English for now. Backend can handle other languages if provided.
+  // Default to English
   return 'en-IN';
 };
 
@@ -80,7 +80,9 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ user, inline = false, dropUp 
     const r = recognitionRef.current;
     if (!r) return;
     try {
-      r.lang = 'en-IN';
+      // Detect current app language and set recognition language
+      const appLang = (i18n?.language || 'en').startsWith('hi') ? 'hi-IN' : 'en-IN';
+      r.lang = appLang;
       r.start();
       setListening(true);
     } catch {
@@ -109,7 +111,8 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ user, inline = false, dropUp 
         .filter(Boolean);
 
     const stopwords = new Set([
-      'the', 'is', 'a', 'an', 'how', 'do', 'i', 'what', 'can', 'my', 'where', 'on', 'of', 'to', 'in', 'and', 'for', 'you', 'me', 'it', 'will', 'be', 'are', 'your'
+      'the', 'is', 'a', 'an', 'how', 'do', 'i', 'what', 'can', 'my', 'where', 'on', 'of', 'to', 'in', 'and', 'for', 'you', 'me', 'it', 'will', 'be', 'are', 'your',
+      'kya', 'kaise', 'kahan', 'kahan', 'aap', 'hai', 'hain', 'mera', 'meri', 'ka', 'ke', 'ki', 'hone'
     ]);
 
     const words = normalize(text).filter((w) => !stopwords.has(w));
@@ -120,7 +123,8 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ user, inline = false, dropUp 
       if (qWords.length === 0) continue;
       const common = qWords.filter((w) => words.includes(w)).length;
       const overlap = common / qWords.length;
-      if (overlap >= 0.5) {
+      // Lower threshold to 0.35 to catch more Hindi/Hinglish matches
+      if (overlap >= 0.35) {
         matchedSample = s;
         break;
       }
@@ -129,8 +133,8 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ user, inline = false, dropUp 
     const containsDevanagari = /[\u0900-\u097F]/.test(text);
     const isLatinHindi = lang && lang.startsWith('hi') && !containsDevanagari;
 
-    // If a close sample match exists and it's not Hinglish (Latin Hindi), use the local sample
-    if (matchedSample && !isLatinHindi) {
+    // If a close sample match exists, use the local sample (works for both Devanagari and Hinglish)
+    if (matchedSample) {
       const isHi = lang && lang.startsWith('hi');
       const reply = isHi ? matchedSample.a_hi || matchedSample.a : matchedSample.a_en || matchedSample.a;
       const replyLang = isHi ? 'hi-IN' : 'en-IN';
@@ -146,7 +150,7 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ user, inline = false, dropUp 
         body: JSON.stringify({ message: text, lang, uiLang, user, script: containsDevanagari ? 'devanagari' : 'latin' }),
       });
 
-      if (!res.ok) throw new Error();
+      if (!res.ok) throw new Error('API not available');
 
       const data = await res.json();
       const reply = data.reply || 'No response';
@@ -155,9 +159,15 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ user, inline = false, dropUp 
       setMessages((m) => [...m, { from: 'assistant', text: reply }]);
       speak(reply, replyLang);
     } catch (e) {
-      const err = t('assistant.unavailable');
-      setMessages((m) => [...m, { from: 'assistant', text: err }]);
-      speak(err, lang);
+      // API unavailable - provide a helpful fallback response in the detected language
+      const isHi = lang && lang.startsWith('hi');
+      const fallbackReply = isHi 
+        ? 'माफ़ कीजिए, मैं इस समय API से जुड़ नहीं हूं। कृपया बाद में पूछें या हमारी सहायता टीम से संपर्क करें।'
+        : 'I\'m currently offline. Please try again later or contact our support team.';
+      
+      console.warn('AI Assistant API error:', e);
+      setMessages((m) => [...m, { from: 'assistant', text: fallbackReply }]);
+      speak(fallbackReply, lang);
     }
   };
 
