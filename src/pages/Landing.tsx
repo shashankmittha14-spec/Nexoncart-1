@@ -125,7 +125,8 @@ const Landing = () => {
         </div>
       </header>
 
-      {/* Assistant removed from Landing; rendered globally in App when logged in */}
+      {/* AI Assistant */}
+      {profile && <AIAssistant user={profile} inline dropUp />}
 
       {/* Hero Section */}
       <section className="pt-32 pb-20 px-4">
@@ -243,7 +244,7 @@ const Landing = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {features.map((feature, index) => (
               <motion.div
-                key={feature.title}
+                key={feature.titleKey}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
@@ -269,7 +270,7 @@ const Landing = () => {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
               {benefits.map((benefit, index) => (
                 <motion.div
-                  key={benefit.text}
+                  key={benefit.textKey}
                   initial={{ opacity: 0, scale: 0.9 }}
                   whileInView={{ opacity: 1, scale: 1 }}
                   viewport={{ once: true }}

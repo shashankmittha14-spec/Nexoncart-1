@@ -31,6 +31,7 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ user, inline = false, dropUp 
   const [messages, setMessages] = useState<
     { from: 'user' | 'assistant'; text: string }[]
   >([]);
+  const [isDarkMode, setIsDarkMode] = useState(false);
   const recognitionRef = useRef<any>(null);
   const { t } = useTranslation();
   const { i18n } = useTranslation();
@@ -65,6 +66,19 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ user, inline = false, dropUp 
     };
 
     recognitionRef.current = r;
+
+    // Detect theme on mount and listen for changes
+    const checkTheme = () => {
+      const theme = document.documentElement.getAttribute('data-theme');
+      setIsDarkMode(theme === 'dark');
+    };
+
+    checkTheme();
+
+    const observer = new MutationObserver(checkTheme);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
+    return () => observer.disconnect();
   }, []);
 
   const speak = (text: string, lang = 'en-IN') => {
@@ -176,23 +190,39 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ user, inline = false, dropUp 
     return (
       <div className="inline-flex items-center">
         {open ? (
-          <div className="fixed bottom-20 left-6 z-50 w-64 sm:w-80 bg-white p-3 rounded-xl shadow-2xl border">
+          <div className={`fixed bottom-20 left-6 z-50 w-64 sm:w-80 p-3 rounded-xl shadow-2xl border transition-colors ${
+            isDarkMode 
+              ? 'bg-slate-900 border-slate-700 text-white' 
+              : 'bg-white border-gray-200 text-gray-900'
+          }`}>
             <div className="flex items-center justify-between mb-2">
-              <div className="font-semibold">NexonCart.Assistant {user?.name ? `— ${user.name}` : ''}</div>
+              <div className="font-semibold">NexonCart.Assistant</div>
               <button
                 onClick={() => {
                   setOpen(false);
                   window.speechSynthesis.cancel();
                 }}
               >
-                <X className="w-4 h-4" />
+                <X className={`w-4 h-4 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`} />
               </button>
             </div>
 
-            <div className="sm:h-40 h-32 overflow-y-auto mb-2 text-sm bg-gray-50 p-2 rounded">
+            <div className={`sm:h-40 h-32 overflow-y-auto mb-2 text-sm p-2 rounded ${
+              isDarkMode 
+                ? 'bg-slate-800 border border-slate-700' 
+                : 'bg-gray-50 border border-gray-200'
+            }`}>
               {messages.map((m, i) => (
                 <div key={i} className={`mb-2 ${m.from === 'user' ? 'text-right' : ''}`}>
-                  <span className="inline-block px-2 py-1 rounded bg-gray-200">{m.text}</span>
+                  <span className={`inline-block px-2 py-1 rounded ${
+                    m.from === 'user'
+                      ? isDarkMode 
+                        ? 'bg-[#3DBB7A] text-white' 
+                        : 'bg-blue-100 text-blue-900'
+                      : isDarkMode 
+                        ? 'bg-slate-700 text-gray-100' 
+                        : 'bg-gray-200 text-gray-900'
+                  }`}>{m.text}</span>
                 </div>
               ))}
             </div>
@@ -200,7 +230,11 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ user, inline = false, dropUp 
             <div className="flex gap-2">
               <button
                 onClick={() => (listening ? recognitionRef.current?.stop() : startListening())}
-                className="p-2 bg-gray-200 rounded"
+                className={`p-2 rounded transition-colors ${
+                  isDarkMode 
+                    ? 'bg-slate-700 hover:bg-slate-600 text-white' 
+                    : 'bg-gray-200 hover:bg-gray-300 text-gray-900'
+                }`}
               >
                 <Mic className="w-4 h-4" />
               </button>
@@ -209,11 +243,19 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ user, inline = false, dropUp 
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
-                className="flex-1 border rounded px-2 py-1 text-sm"
+                className={`flex-1 border rounded px-2 py-1 text-sm transition-colors ${
+                  isDarkMode 
+                    ? 'bg-slate-800 border-slate-700 text-white placeholder-gray-400' 
+                    : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                }`}
                 placeholder={t('assistant.placeholder')}
               />
 
-              <button onClick={sendMessage} className="p-2 bg-black text-white rounded">
+              <button onClick={sendMessage} className={`p-2 rounded transition-colors ${
+                isDarkMode 
+                  ? 'bg-[#3DBB7A] text-white hover:bg-[#2da367]' 
+                  : 'bg-black text-white hover:bg-gray-800'
+              }`}>
                 <Send className="w-4 h-4" />
               </button>
             </div>
@@ -222,7 +264,11 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ user, inline = false, dropUp 
           <button
             onClick={() => setOpen(true)}
             title={t('assistant.label')}
-            className="w-10 h-10 rounded-full bg-black text-white flex items-center justify-center mr-2"
+            className={`w-10 h-10 rounded-full flex items-center justify-center mr-2 transition-colors ${
+              isDarkMode 
+                ? 'bg-[#3DBB7A] text-white' 
+                : 'bg-black text-white'
+            }`}
           >
             <Mic className="w-4 h-4" />
           </button>
