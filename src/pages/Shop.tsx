@@ -121,10 +121,11 @@ const Shop = () => {
         if (name === 'NotAllowedError' || name === 'SecurityError' || name === 'PermissionDeniedError') {
           console.error('Camera permission denied:', gErr);
           toast.error('Camera access denied', {
-            description: 'Please allow camera access in your browser settings or use manual input.',
+            description: 'Please allow camera access in your browser settings and tap "Tap to Start Scanning" again to retry.',
           });
+          // Don't automatically open manual input on a simple permission denial — allow user to retry granting permission.
           setIsScanning(false);
-          setShowManualInput(true);
+          setShowManualInput(false);
           return;
         }
 
