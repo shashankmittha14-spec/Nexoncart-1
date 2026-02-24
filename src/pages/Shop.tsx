@@ -107,34 +107,60 @@ const Shop = () => {
     setShowManualInput(false);
     
     try {
-      // Request camera permission first
-      const devices = await navigator.mediaDevices.enumerateDevices();
-      const hasCamera = devices.some(device => device.kind === 'videoinput');
-      
-      if (!hasCamera) {
-        console.error('No camera device found');
-        toast.error('No camera found', {
-          description: 'Your device does not have a camera. Use manual barcode input instead.',
-        });
-        setIsScanning(false);
-        setShowManualInput(true);
-        return;
-      }
-
-      // Try to get camera permission
+      // Try getUserMedia first — some mobile browsers do not expose devices
       try {
-        await navigator.mediaDevices.getUserMedia({ 
-          video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } },
-          audio: false 
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } },
+          audio: false,
         });
-      } catch (permissionErr) {
-        console.error('Camera permission denied:', permissionErr);
-        toast.error('Camera access denied', {
-          description: 'Please allow camera access in your browser settings or use manual input.',
-        });
-        setIsScanning(false);
-        setShowManualInput(true);
-        return;
+        // we only needed to check permission / availability — stop tracks immediately
+        stream.getTracks().forEach((t) => t.stop());
+      } catch (gErr: any) {
+        const name = gErr?.name || '';
+        // Permission denied
+        if (name === 'NotAllowedError' || name === 'SecurityError' || name === 'PermissionDeniedError') {
+          console.error('Camera permission denied:', gErr);
+          toast.error('Camera access denied', {
+            description: 'Please allow camera access in your browser settings or use manual input.',
+          });
+          setIsScanning(false);
+          setShowManualInput(true);
+          return;
+        }
+
+        // NotFound or no device — try enumerateDevices as a fallback check
+        if (name === 'NotFoundError' || name === 'OverconstrainedError') {
+          try {
+            const devices = await navigator.mediaDevices.enumerateDevices();
+            const hasCamera = devices.some((device) => device.kind === 'videoinput');
+            if (!hasCamera) {
+              console.error('No camera device found (enumerateDevices)');
+              toast.error('No camera found', {
+                description: 'Your device does not have a camera. Use manual barcode input instead.',
+              });
+              setIsScanning(false);
+              setShowManualInput(true);
+              return;
+            }
+            // else continue — device present but getUserMedia failed with NotFound/Overconstrained
+          } catch (enumErr) {
+            console.error('enumerateDevices failed:', enumErr);
+            toast.error('Camera check failed', {
+              description: 'Use manual barcode input instead.',
+            });
+            setIsScanning(false);
+            setShowManualInput(true);
+            return;
+          }
+        } else {
+          console.error('getUserMedia unexpected error:', gErr);
+          toast.error('Camera access failed', {
+            description: 'Please use manual barcode input.',
+          });
+          setIsScanning(false);
+          setShowManualInput(true);
+          return;
+        }
       }
 
       const html5QrCode = new Html5Qrcode('scanner');
