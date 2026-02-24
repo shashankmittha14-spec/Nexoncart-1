@@ -80,7 +80,11 @@ const ThemeToggle: React.FC = () => {
       <button
         onClick={toggle}
         aria-label="Toggle theme"
-        className="px-3 py-1 rounded-md border bg-white/90 text-sm shadow flex items-center gap-2"
+        className={`px-3 py-1 rounded-md border text-sm shadow flex items-center gap-2 font-semibold transition-all ${
+          theme === 'dark'
+            ? 'bg-[#00ff00] text-black border-[#00ff00]'
+            : 'bg-white/90 text-gray-900 border-gray-300'
+        }`}
       >
         {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
         <span className="uppercase text-xs">{theme === 'dark' ? 'Light' : 'Dark'}</span>
