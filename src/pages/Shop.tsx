@@ -113,10 +113,10 @@ const Shop = () => {
     setShowManualInput(false);
     
     try {
-      // Try native BarcodeDetector first (Chromium-based browsers)
+      // NOTE: Native BarcodeDetector disabled — less reliable on mobile; Html5Qrcode is preferred
       try {
         const BD = (window as any).BarcodeDetector;
-        if (BD) {
+        if (BD && false) { // DISABLED for mobile compatibility
           const desired = ['ean_13', 'ean_8', 'upc_e', 'upc_a', 'code_128', 'code_39', 'qr_code'];
           let supported: string[] = desired;
           if (typeof BD.getSupportedFormats === 'function') {
@@ -174,62 +174,9 @@ const Shop = () => {
       } catch (nativeErr) {
         console.warn('Native BarcodeDetector failed to initialize:', nativeErr);
       }
-      // Try getUserMedia first — some mobile browsers do not expose devices
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } },
-          audio: false,
-        });
-        // we only needed to check permission / availability — stop tracks immediately
-        stream.getTracks().forEach((t) => t.stop());
-      } catch (gErr: any) {
-        const name = gErr?.name || '';
-        // Permission denied
-        if (name === 'NotAllowedError' || name === 'SecurityError' || name === 'PermissionDeniedError') {
-          console.error('Camera permission denied:', gErr);
-          toast.error('Camera access denied', {
-            description: 'Please allow camera access in your browser settings and tap "Tap to Start Scanning" again to retry.',
-          });
-          // Don't automatically open manual input on a simple permission denial — allow user to retry granting permission.
-          setIsScanning(false);
-          setShowManualInput(false);
-          return;
-        }
 
-        // NotFound or no device — try enumerateDevices as a fallback check
-        if (name === 'NotFoundError' || name === 'OverconstrainedError') {
-          try {
-            const devices = await navigator.mediaDevices.enumerateDevices();
-            const hasCamera = devices.some((device) => device.kind === 'videoinput');
-            if (!hasCamera) {
-              console.error('No camera device found (enumerateDevices)');
-              toast.error('No camera found', {
-                description: 'Your device does not have a camera. Use manual barcode input instead.',
-              });
-              setIsScanning(false);
-              setShowManualInput(true);
-              return;
-            }
-            // else continue — device present but getUserMedia failed with NotFound/Overconstrained
-          } catch (enumErr) {
-            console.error('enumerateDevices failed:', enumErr);
-            toast.error('Camera check failed', {
-              description: 'Use manual barcode input instead.',
-            });
-            setIsScanning(false);
-            setShowManualInput(true);
-            return;
-          }
-        } else {
-          console.error('getUserMedia unexpected error:', gErr);
-          toast.error('Camera access failed', {
-            description: 'Please use manual barcode input.',
-          });
-          setIsScanning(false);
-          setShowManualInput(true);
-          return;
-        }
-      }
+      // Skip pre-check permission prompts — Html5Qrcode will request camera access when needed
+      // This improves mobile compatibility and avoids duplicate permission dialogs
 
       const html5QrCode = new Html5Qrcode('scanner');
 
@@ -314,7 +261,7 @@ const Shop = () => {
       console.error('Error starting scanner:', err);
       const errorMsg = err instanceof Error ? err.message : 'Unknown error';
       toast.error('Scanner error', {
-        description: `${errorMsg}. Try manual barcode input instead.`,
+        description: `${errorMsg}. Please allow camera access and try again.`,
       });
       setIsScanning(false);
       setShowManualInput(true);
