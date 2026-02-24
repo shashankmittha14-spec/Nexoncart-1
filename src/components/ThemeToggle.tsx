@@ -82,7 +82,7 @@ const ThemeToggle: React.FC = () => {
         aria-label="Toggle theme"
         className={`px-3 py-1 rounded-md border text-sm shadow flex items-center gap-2 font-semibold transition-all ${
           theme === 'dark'
-            ? 'bg-[#00ff00] text-black border-[#00ff00]'
+            ? 'bg-[#3DBB7A] text-white border-[#3DBB7A]'
             : 'bg-white/90 text-gray-900 border-gray-300'
         }`}
       >
