@@ -49,9 +49,9 @@ const Shop = () => {
   const [profileForm, setProfileForm] = useState<{ name?: string; email?: string; phone?: string; address?: string }>({});
   const [manualBarcodeInput, setManualBarcodeInput] = useState('');
   const [showManualInput, setShowManualInput] = useState(false);
-  const NOTEBOOK_PRODUCT_ID = '18'; // Notebook 200 Pages
-  const BOTTLE_PRODUCT_ID = '19';   // Water Bottle 1L
-  const scanCountRef = useRef(0); // Track scans to alternate between Notebook and Bottle
+  const lastScannedBarcodeRef = useRef(''); // Track last scanned barcode to prevent duplicates
+  const lastScanTimeRef = useRef(0); // Track time of last scan to debounce
+  const SCAN_DEBOUNCE_MS = 1000; // Minimum time between scans (ms)
 
   const { 
     items, 
@@ -293,27 +293,48 @@ const Shop = () => {
   const handleBarcodeDetected = useCallback((barcode: string) => {
     const cleaned = String(barcode || '').trim();
     console.log('✅ Barcode detected:', cleaned);
-    
-    // Alternate between Notebook (even) and Bottle (odd) scans
-    const productId = scanCountRef.current % 2 === 0 ? NOTEBOOK_PRODUCT_ID : BOTTLE_PRODUCT_ID;
-    scanCountRef.current++;
-    
-    const product = mockProducts.find((p) => p.id === productId);
-    
+
+    const now = Date.now();
+
+    // Debounce: Ignore if same barcode within 1 second or if last scan was too recent
+    if (cleaned === lastScannedBarcodeRef.current || (now - lastScanTimeRef.current) < SCAN_DEBOUNCE_MS) {
+      console.debug('⏱️ Scan ignored (debounce):', cleaned);
+      return;
+    }
+
+    lastScannedBarcodeRef.current = cleaned;
+    lastScanTimeRef.current = now;
+
+    // Look up product by actual barcode
+    const product = findProductByBarcode(cleaned);
+
     if (product) {
       addItem(product);
       setCartOpen(true);
       toast.success(`✨ Added ${product.name} to cart!`, {
         description: `₹${product.price}`,
       });
-      console.log(`Added ${product.name} (scan #${scanCountRef.current})`);
+      console.log(`Added ${product.name} from barcode: ${cleaned}`);
+
+      // Pause scanner briefly to prevent multiple rapid scans
+      if (scannerRef.current?.isScanning) {
+        scannerRef.current.stop().then(() => {
+          setTimeout(() => {
+            if (scannerRef.current && isScanning) {
+              scannerRef.current.resume();
+            }
+          }, SCAN_DEBOUNCE_MS);
+        }).catch(() => {});
+      }
     } else {
-      console.error(`Product ${productId} not found`);
-      toast.error('Error adding product');
+      console.warn('Product not found for barcode:', cleaned);
+      toast.error('Product not found', {
+        description: `No product found with barcode: ${cleaned}`,
+      });
     }
-    
+
     setManualBarcodeInput('');
-  }, [addItem]);
+  }, [addItem, isScanning]);
 
   const handleManualBarcode = () => {
     if (manualBarcodeInput.trim()) {
