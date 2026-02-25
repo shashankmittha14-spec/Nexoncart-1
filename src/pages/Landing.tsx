@@ -19,6 +19,7 @@ import { mockProducts } from '@/data/mockProducts';
 const Landing = () => {
   const navigate = useNavigate();
   const [profile, setProfile] = useState<{ name?: string; email?: string; phone?: string } | null>(null);
+  const [aiPosition, setAiPosition] = useState({ x: 24, y: -80 });
   const { t } = useTranslation();
 
   useEffect(() => {
@@ -28,7 +29,34 @@ const Landing = () => {
     } catch (e) {
       // ignore
     }
+    // Load saved AI Assistant position from localStorage
+    try {
+      const savedPosition = localStorage.getItem('nexoncart_ai_position');
+      if (savedPosition) {
+        setAiPosition(JSON.parse(savedPosition));
+      }
+    } catch (e) {
+      // ignore
+    }
   }, []);
+
+  const handleAiDragEnd = (event: any, info: any) => {
+    const newPosition = { x: info.offset.x, y: info.offset.y };
+    setAiPosition(newPosition);
+    // Save to localStorage
+    try {
+      localStorage.setItem('nexoncart_ai_position', JSON.stringify(newPosition));
+    } catch {}
+  };
+
+  const handleAiCloseChat = () => {
+    // Reset position to default after closing
+    const defaultPosition = { x: 24, y: -80 };
+    setAiPosition(defaultPosition);
+    try {
+      localStorage.setItem('nexoncart_ai_position', JSON.stringify(defaultPosition));
+    } catch {}
+  };
 
   const handleLogout = () => {
     try {
@@ -125,8 +153,21 @@ const Landing = () => {
         </div>
       </header>
 
-      {/* AI Assistant */}
-      {profile && <AIAssistant user={profile} inline dropUp />}
+      {/* AI Assistant - with dragging support */}
+      {profile && (
+        <motion.div
+          className="fixed bottom-0 left-0 z-50 cursor-grab active:cursor-grabbing"
+          drag
+          dragElastic={0.1}
+          dragMomentum={false}
+          onDragEnd={handleAiDragEnd}
+          initial={{ x: aiPosition.x, y: aiPosition.y }}
+          animate={{ x: aiPosition.x, y: aiPosition.y }}
+          onMouseLeave={handleAiCloseChat}
+        >
+          <AIAssistant user={profile} inline dropUp />
+        </motion.div>
+      )}
 
       {/* Hero Section */}
       <section className="pt-32 pb-20 px-4">
@@ -164,8 +205,8 @@ const Landing = () => {
               {/* Phone bezel */}
               <div className="bg-neutral-900 rounded-3xl p-3 shadow-2xl">
                 <div className="bg-card rounded-2xl overflow-hidden">
-                  {/* Top status bar (green) */}
-                  <div className="h-8 bg-emerald-600 flex items-center justify-between px-3 text-white text-xs">
+                  {/* Top status bar (cyan) */}
+                  <div className="h-8 bg-cyan-600 flex items-center justify-between px-3 text-white text-xs">
                     <div className="flex items-center gap-2">
                       <span className="w-2 h-2 bg-white/80 rounded-full" />
                       <span className="w-2 h-2 bg-white/80 rounded-full" />
@@ -179,8 +220,8 @@ const Landing = () => {
 
                   <div className="p-4">
                     {/* Scanner viewport */}
-                    <div className="h-44 rounded-lg border-2 border-emerald-400/40 flex items-center justify-center bg-gradient-to-b from-emerald-50 to-transparent">
-                      <div className="w-40 h-28 rounded-md border-2 border-emerald-400/60" />
+                    <div className="h-44 rounded-lg border-2 border-cyan-400/40 flex items-center justify-center bg-gradient-to-b from-cyan-50 to-transparent">
+                      <div className="w-40 h-28 rounded-md border-2 border-cyan-400/60" />
                     </div>
 
                     {/* Scanning status */}
@@ -190,7 +231,7 @@ const Landing = () => {
                         <div className="text-xs text-muted-foreground">{t('scanner.live')}</div>
                       </div>
                       <div className="w-full h-2 bg-foreground/5 rounded-full mt-3 overflow-hidden">
-                        <div className="h-2 bg-emerald-500 w-1/2 rounded-full" />
+                        <div className="h-2 bg-cyan-500 w-1/2 rounded-full" />
                       </div>
                     </div>
                   </div>
@@ -210,7 +251,7 @@ const Landing = () => {
                 </div>
 
                 <div className="h-2 bg-foreground/5 rounded-full mt-3 overflow-hidden">
-                  <div className="h-2 bg-emerald-500 w-3/4 rounded-full" />
+                  <div className="h-2 bg-cyan-500 w-3/4 rounded-full" />
                 </div>
 
                 <div className="text-sm text-muted-foreground mt-2">{t('scanner.budget', { current: '₹1,245', limit: '₹2,000' })}</div>

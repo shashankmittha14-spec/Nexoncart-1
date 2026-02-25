@@ -190,7 +190,7 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ user, inline = false, dropUp 
     return (
       <div className="inline-flex items-center">
         {open ? (
-          <div className={`fixed bottom-20 left-6 z-50 w-64 sm:w-80 p-3 rounded-xl shadow-2xl border transition-colors ${
+          <div className={`absolute bottom-6 left-0 z-50 w-64 sm:w-80 p-3 rounded-xl shadow-2xl border transition-colors ${
             isDarkMode 
               ? 'bg-slate-900 border-slate-700 text-white' 
               : 'bg-white border-gray-200 text-gray-900'
@@ -217,8 +217,8 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ user, inline = false, dropUp 
                   <span className={`inline-block px-2 py-1 rounded ${
                     m.from === 'user'
                       ? isDarkMode 
-                        ? 'bg-[#3DBB7A] text-white' 
-                        : 'bg-blue-100 text-blue-900'
+                        ? 'bg-primary text-white' 
+                        : 'bg-cyan-100 text-cyan-900'
                       : isDarkMode 
                         ? 'bg-slate-700 text-gray-100' 
                         : 'bg-gray-200 text-gray-900'
@@ -253,7 +253,7 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ user, inline = false, dropUp 
 
               <button onClick={sendMessage} className={`p-2 rounded transition-colors ${
                 isDarkMode 
-                  ? 'bg-[#3DBB7A] text-white hover:bg-[#2da367]' 
+                  ? 'bg-primary text-primary-foreground hover:bg-primary/90' 
                   : 'bg-black text-white hover:bg-gray-800'
               }`}>
                 <Send className="w-4 h-4" />
@@ -266,7 +266,7 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ user, inline = false, dropUp 
             title={t('assistant.label')}
             className={`w-10 h-10 rounded-full flex items-center justify-center mr-2 transition-colors ${
               isDarkMode 
-                ? 'bg-[#3DBB7A] text-white' 
+                ? 'bg-primary text-primary-foreground' 
                 : 'bg-black text-white'
             }`}
           >

@@ -33,7 +33,7 @@ import ThemeToggle from '@/components/ThemeToggle';
 
 const Shop = () => {
   const navigate = useNavigate();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [isScanning, setIsScanning] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
   const [budgetInput, setBudgetInput] = useState('');
@@ -49,6 +49,8 @@ const Shop = () => {
   const [profileForm, setProfileForm] = useState<{ name?: string; email?: string; phone?: string; address?: string }>({});
   const [manualBarcodeInput, setManualBarcodeInput] = useState('');
   const [showManualInput, setShowManualInput] = useState(false);
+  const [currentLanguage, setCurrentLanguage] = useState<string>(i18n.language || 'en');
+  const [aiPosition, setAiPosition] = useState({ x: 24, y: -80 });
   const lastScannedBarcodeRef = useRef(''); // Track last scanned barcode to prevent duplicates
   const lastScanTimeRef = useRef(0); // Track time of last scan to debounce
   const SCAN_DEBOUNCE_MS = 1000; // Minimum time between scans (ms)
@@ -70,6 +72,16 @@ const Shop = () => {
   useEffect(() => {
     const sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     setSessionId(sessionId);
+
+    // Load saved AI Assistant position from localStorage
+    try {
+      const savedPosition = localStorage.getItem('nexoncart_ai_position');
+      if (savedPosition) {
+        setAiPosition(JSON.parse(savedPosition));
+      }
+    } catch (e) {
+      // ignore
+    }
   }, [setSessionId]);
 
   useEffect(() => {
@@ -91,6 +103,47 @@ const Shop = () => {
       }
     } catch {}
   }, []);
+
+  // Listen for language changes
+  useEffect(() => {
+    const handleLanguageChange = (lng: string) => {
+      setCurrentLanguage(lng);
+    };
+    if (i18n.on) {
+      i18n.on('languageChanged', handleLanguageChange);
+    }
+    return () => {
+      if (i18n.off) {
+        i18n.off('languageChanged', handleLanguageChange);
+      }
+    };
+  }, [i18n]);
+
+  const toggleLanguage = () => {
+    const nextLang = (currentLanguage || 'en').startsWith('hi') ? 'en' : 'hi';
+    i18n.changeLanguage(nextLang);
+    try {
+      localStorage.setItem('locale', nextLang);
+    } catch {}
+  };
+
+  const handleAiDragEnd = (event: any, info: any) => {
+    const newPosition = { x: info.offset.x, y: info.offset.y };
+    setAiPosition(newPosition);
+    // Save to localStorage
+    try {
+      localStorage.setItem('nexoncart_ai_position', JSON.stringify(newPosition));
+    } catch {}
+  };
+
+  const handleAiCloseChat = () => {
+    // Reset position to default after closing
+    const defaultPosition = { x: 24, y: -80 };
+    setAiPosition(defaultPosition);
+    try {
+      localStorage.setItem('nexoncart_ai_position', JSON.stringify(defaultPosition));
+    } catch {}
+  };
 
   const handleLogout = () => {
     try {
@@ -314,27 +367,16 @@ const Shop = () => {
       toast.success(`✨ Added ${product.name} to cart!`, {
         description: `₹${product.price}`,
       });
-      console.log(`Added ${product.name} from barcode: ${cleaned}`);
-
-      // Pause scanner briefly to prevent multiple rapid scans
-      if (scannerRef.current?.isScanning) {
-        scannerRef.current.stop().then(() => {
-          setTimeout(() => {
-            if (scannerRef.current && isScanning) {
-              scannerRef.current.resume();
-            }
-          }, SCAN_DEBOUNCE_MS);
-        }).catch(() => {});
-      }
+      console.log(`✅ Added ${product.name} (Barcode: ${cleaned})`);
     } else {
       console.warn('Product not found for barcode:', cleaned);
-      toast.error('Product not found', {
-        description: `No product found with barcode: ${cleaned}`,
+      toast.error('❌ Product not found', {
+        description: `Barcode: ${cleaned}`,
       });
     }
 
     setManualBarcodeInput('');
-  }, [addItem, isScanning]);
+  }, [addItem]);
 
   const handleManualBarcode = () => {
     if (manualBarcodeInput.trim()) {
@@ -410,14 +452,12 @@ const Shop = () => {
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator />
                       <div className="p-2">
-                        <button
-                          onClick={() => setShowBudgetModal(true)}
-                          className="w-full btn-primary py-2 mb-2"
-                        >
-                          Set Budget
-                        </button>
                         <button onClick={() => setShowProfileModal(true)} className="w-full btn-ghost py-2 mb-2">
                           Edit Profile
+                        </button>
+                        <button onClick={toggleLanguage} className="w-full btn-ghost py-2 mb-2 flex items-center justify-center gap-2">
+                          <span>🌐</span>
+                          {currentLanguage.toUpperCase() === 'HI' ? 'English' : 'हिन्दी'}
                         </button>
                         <button onClick={handleLogout} className="w-full btn-ghost py-2">
                           Log out
@@ -468,34 +508,34 @@ const Shop = () => {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
               className={`mb-6 p-6 rounded-xl shadow-md ${
-                  budgetStatus === 'over' ? 'bg-red-50 border border-red-200' : budgetStatus === 'warn' ? 'bg-amber-50 border border-amber-200' : 'bg-emerald-50 border border-emerald-200'
+                  budgetStatus === 'over' ? 'bg-red-50 border border-red-200' : budgetStatus === 'warn' ? 'bg-amber-50 border border-amber-200' : 'bg-cyan-50 border border-cyan-200'
                 }`}
             >
               <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
                 <div className="flex items-center gap-4">
                   <div className={`w-12 h-12 rounded-full flex items-center justify-center shadow-sm ${
-                    budgetStatus === 'over' ? 'bg-red-600/10' : budgetStatus === 'warn' ? 'bg-amber-600/10' : 'bg-emerald-600/10'
+                    budgetStatus === 'over' ? 'bg-red-600/10' : budgetStatus === 'warn' ? 'bg-amber-600/10' : 'bg-cyan-600/10'
                   }`}>
-                    <AlertTriangle className={`w-6 h-6 ${budgetStatus === 'over' ? 'text-red-600' : budgetStatus === 'warn' ? 'text-amber-600' : 'text-emerald-600'}`} />
+                    <AlertTriangle className={`w-6 h-6 ${budgetStatus === 'over' ? 'text-red-600' : budgetStatus === 'warn' ? 'text-amber-600' : 'text-cyan-600'}`} />
                   </div>
                   <div className="min-w-[180px]">
                     <div className="text-sm text-muted-foreground">Remaining</div>
                     <div className={`text-3xl md:text-4xl font-extrabold ${
-                      budgetStatus === 'over' ? 'text-red-600' : budgetStatus === 'warn' ? 'text-amber-600' : 'text-emerald-600'
+                      budgetStatus === 'over' ? 'text-red-600' : budgetStatus === 'warn' ? 'text-amber-600' : 'text-cyan-600'
                     }`}>₹{remaining.toFixed(0)}</div>
-                    <div className={`text-sm font-semibold mt-1 ${budgetStatus === 'over' ? 'text-red-600' : budgetStatus === 'warn' ? 'text-amber-600' : 'text-emerald-600'}`}>
+                    <div className={`text-sm font-semibold mt-1 ${budgetStatus === 'over' ? 'text-red-600' : budgetStatus === 'warn' ? 'text-amber-600' : 'text-cyan-600'}`}>
                       {budgetStatus === 'over' ? `BUDGET EXCEEDED BY ₹${(totalAmount - (budgetLimit || 0)).toFixed(0)}` : budgetStatus === 'warn' ? `Approaching budget — ₹${remaining.toFixed(0)} remaining` : `Within budget — ₹${remaining.toFixed(0)} remaining`}
                     </div>
                   </div>
                 </div>
 
                 <div className="flex-1 w-full">
-                  <div className={`${budgetStatus === 'over' ? 'bg-red-100' : budgetStatus === 'warn' ? 'bg-amber-100' : 'bg-emerald-100'} w-full h-3 rounded-full overflow-hidden`}>
-                    <div className={`${budgetStatus === 'over' ? 'bg-red-600' : budgetStatus === 'warn' ? 'bg-amber-600' : 'bg-emerald-600'} h-3`} style={{ width: `${utilizationPct}%` }} />
+                  <div className={`${budgetStatus === 'over' ? 'bg-red-100' : budgetStatus === 'warn' ? 'bg-amber-100' : 'bg-cyan-100'} w-full h-3 rounded-full overflow-hidden`}>
+                    <div className={`${budgetStatus === 'over' ? 'bg-red-600' : budgetStatus === 'warn' ? 'bg-amber-600' : 'bg-cyan-600'} h-3`} style={{ width: `${utilizationPct}%` }} />
                   </div>
                   <div className="flex items-center justify-between mt-2">
                     <div className="text-sm text-muted-foreground">Target Budget: ₹{budgetLimit}</div>
-                    <div className={`text-sm font-semibold ${budgetStatus === 'over' ? 'text-red-600' : budgetStatus === 'warn' ? 'text-amber-600' : 'text-emerald-600'}`}>{utilizationPct}%</div>
+                    <div className={`text-sm font-semibold ${budgetStatus === 'over' ? 'text-red-600' : budgetStatus === 'warn' ? 'text-amber-600' : 'text-cyan-600'}`}>{utilizationPct}%</div>
                   </div>
                 </div>
               </div>
@@ -506,17 +546,32 @@ const Shop = () => {
           )}
         </AnimatePresence>
 
-        {/* Scanner Section */}
-        <div className="glass-card p-6 mb-6">
+        {/* Set Budget Button - Always Visible */}
+        <div className="mb-6">
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => setShowBudgetModal(true)}
+            className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-primary to-primary/80 text-primary-foreground font-semibold shadow-md hover:shadow-lg transition-shadow flex items-center justify-center gap-2"
+          >
+            <Wallet className="w-5 h-5" />
+            {budgetLimit ? `Budget: ₹${budgetLimit}` : 'Set Budget Limit'}
+          </motion.button>
+        </div>
+
+        {/* Scanner Section & AI Assistant Side by Side */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+          {/* Scanner Section - Left Side */}
+          <div className="lg:col-span-2 glass-card p-6">
             <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-foreground">{t('shop.scanProducts')}</h2>
-            {isScanning && (
-              <span className="badge-success flex items-center gap-1">
-                <span className="w-2 h-2 bg-success rounded-full animate-pulse" />
-                {t('scanner.live')}
-              </span>
-            )}
-          </div>
+              <h2 className="text-lg font-semibold text-foreground">{t('shop.scanProducts')}</h2>
+              {isScanning && (
+                <span className="badge-success flex items-center gap-1">
+                  <span className="w-2 h-2 bg-success rounded-full animate-pulse" />
+                  {t('scanner.live')}
+                </span>
+              )}
+            </div>
 
           <div 
             id="scanner" 
@@ -601,6 +656,7 @@ const Shop = () => {
               </div>
             </motion.div>
           )}
+          </div>
         </div>
 
         {/* Categories (replacing Quick Add) */}
@@ -944,11 +1000,21 @@ const Shop = () => {
         )}
       </AnimatePresence>
 
-      {/* AI Assistant - Shop page only */}
+      {/* Floating AI Assistant - Draggable Icon */}
       {profile && (
-        <div className="fixed bottom-6 left-6 z-50">
+        <motion.div
+          className="fixed z-50 cursor-grab active:cursor-grabbing"
+          drag
+          dragElastic={0.1}
+          dragMomentum={false}
+          onDragEnd={handleAiDragEnd}
+          initial={{ x: aiPosition.x, y: aiPosition.y }}
+          animate={{ x: aiPosition.x, y: aiPosition.y }}
+          style={{ bottom: 0, left: 0 }}
+          onMouseLeave={handleAiCloseChat}
+        >
           <AIAssistant user={profile} inline dropUp />
-        </div>
+        </motion.div>
       )}
     </div>
   );

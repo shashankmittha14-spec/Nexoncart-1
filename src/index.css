@@ -20,11 +20,11 @@
     --popover: 0 0% 100%;
     --popover-foreground: 210 25% 15%;
 
-    /* Primary - Bright Mint */
-    --primary: 152 60% 48%;
+    /* Primary - Bright Cyan */
+    --primary: 180 60% 50%;
     --primary-foreground: 0 0% 100%;
-    --primary-light: 152 60% 95%;
-    --primary-glow: 152 60% 60%;
+    --primary-light: 180 60% 95%;
+    --primary-glow: 180 60% 60%;
 
     /* Secondary - Soft Blue Gray */
     --secondary: 210 20% 96%;
@@ -39,10 +39,10 @@
     --accent-foreground: 0 0% 100%;
     --accent-light: 12 90% 95%;
 
-    /* Success - Fresh Green */
-    --success: 152 60% 45%;
+    /* Success - Fresh Cyan */
+    --success: 180 60% 50%;
     --success-foreground: 0 0% 100%;
-    --success-light: 152 60% 95%;
+    --success-light: 180 60% 95%;
 
     /* Warning - Warm Amber */
     --warning: 38 92% 50%;
@@ -56,7 +56,7 @@
     /* UI Elements */
     --border: 210 20% 90%;
     --input: 210 20% 92%;
-    --ring: 152 60% 48%;
+    --ring: 180 60% 50%;
 
     --radius: 1rem;
 
@@ -66,28 +66,28 @@
     --glass-shadow: 210 25% 15% / 0.08;
 
     /* Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(152 60% 48%), hsl(165 55% 62%));
+    --gradient-primary: linear-gradient(135deg, hsl(180 60% 50%), hsl(195 55% 62%));
     --gradient-accent: linear-gradient(135deg, hsl(12 90% 60%), hsl(28 95% 55%));
-    --gradient-hero: linear-gradient(180deg, hsl(200 20% 98%) 0%, hsl(152 60% 95%) 100%);
-    /* Shop-specific background gradient (brighter mint shades) */
-    --shop-gradient: linear-gradient(180deg, hsl(152 60% 98%) 0%, hsl(152 60% 95%) 35%, hsl(165 55% 98%) 100%);
+    --gradient-hero: linear-gradient(180deg, hsl(200 20% 98%) 0%, hsl(180 60% 95%) 100%);
+    /* Shop-specific background gradient (brighter cyan shades) */
+    --shop-gradient: linear-gradient(180deg, hsl(180 60% 98%) 0%, hsl(180 60% 95%) 35%, hsl(195 55% 98%) 100%);
     --gradient-card: linear-gradient(145deg, hsl(0 0% 100%) 0%, hsl(210 20% 98%) 100%);
 
     /* Shadows */
     --shadow-sm: 0 2px 8px hsl(210 25% 15% / 0.06);
     --shadow-md: 0 4px 20px hsl(210 25% 15% / 0.1);
     --shadow-lg: 0 8px 40px hsl(210 25% 15% / 0.12);
-    --shadow-glow: 0 0 48px hsl(152 60% 48% / 0.28);
+    --shadow-glow: 0 0 48px hsl(180 60% 50% / 0.28);
 
     /* Sidebar (keeping for compatibility) */
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 210 25% 25%;
-    --sidebar-primary: 152 60% 48%;
+    --sidebar-primary: 180 60% 50%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 210 20% 96%;
     --sidebar-accent-foreground: 210 25% 25%;
     --sidebar-border: 210 20% 90%;
-    --sidebar-ring: 152 60% 48%;
+    --sidebar-ring: 180 60% 50%;
   }
 }
 
@@ -103,9 +103,9 @@
     --popover: 0 0% 6%;
     --popover-foreground: 0 0% 100%;
 
-    --primary: 152 60% 48%;
+    --primary: 180 60% 50%;
     --primary-foreground: 0 0% 100%;
-    --primary-light: 152 60% 18%;
+    --primary-light: 180 60% 18%;
 
     --secondary: 0 0% 6%;
     --secondary-foreground: 0 0% 92%;
@@ -117,9 +117,9 @@
     --accent-foreground: 0 0% 100%;
     --accent-light: 12 90% 18%;
 
-    --success: 152 60% 45%;
+    --success: 180 60% 50%;
     --success-foreground: 0 0% 100%;
-    --success-light: 152 60% 18%;
+    --success-light: 180 60% 18%;
 
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 100%;
@@ -130,7 +130,7 @@
 
     --border: 0 0% 12%;
     --input: 0 0% 8%;
-    --ring: 152 60% 48%;
+    --ring: 180 60% 50%;
 
     --radius: 1rem;
 
@@ -138,7 +138,7 @@
     --glass-border: 0 0% 8% / 0.6;
     --glass-shadow: 0 0% 0% / 0.6;
 
-    --gradient-primary: linear-gradient(135deg, hsl(152 60% 48%), hsl(165 55% 62%));
+    --gradient-primary: linear-gradient(135deg, hsl(180 60% 50%), hsl(195 55% 62%));
     --gradient-accent: linear-gradient(135deg, hsl(12 90% 60%), hsl(28 95% 55%));
     --gradient-hero: linear-gradient(180deg, hsl(0 0% 0%) 0%, hsl(210 14% 4%) 100%);
     --shop-gradient: linear-gradient(180deg, hsl(0 0% 0%) 0%, hsl(210 14% 4%) 35%, hsl(210 14% 6%) 100%);
@@ -146,16 +146,16 @@
     --shadow-sm: 0 2px 8px rgba(0,0,0,0.8);
     --shadow-md: 0 6px 24px rgba(0,0,0,0.85);
     --shadow-lg: 0 10px 40px rgba(0,0,0,0.9);
-    --shadow-glow: 0 0 48px hsl(152 60% 48% / 0.08);
+    --shadow-glow: 0 0 48px hsl(180 60% 50% / 0.08);
 
     --sidebar-background: 0 0% 6%;
     --sidebar-foreground: 0 0% 92%;
-    --sidebar-primary: 152 60% 48%;
+    --sidebar-primary: 180 60% 50%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 0 0% 6%;
     --sidebar-accent-foreground: 0 0% 92%;
     --sidebar-border: 0 0% 12%;
-    --sidebar-ring: 152 60% 48%;
+    --sidebar-ring: 180 60% 50%;
   }
 }
 
@@ -197,7 +197,7 @@
 
   .btn-primary:hover {
     transform: translateY(-2px);
-    box-shadow: var(--shadow-lg), 0 0 50px hsl(134 18% 45% / 0.4);
+    box-shadow: var(--shadow-lg), 0 0 50px hsl(180 60% 50% / 0.4);
   }
 
   .btn-primary:active {
@@ -228,7 +228,7 @@
 
   .input-premium:focus {
     @apply outline-none border-primary bg-card;
-    box-shadow: 0 0 0 4px hsl(134 18% 45% / 0.1);
+    box-shadow: 0 0 0 4px hsl(180 60% 50% / 0.1);
   }
 
   /* Badge Styles */

@@ -14,7 +14,6 @@ import NotFound from "./pages/NotFound";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import SplashLoader from '@/components/SplashLoader';
-import LanguageSwitcher from "@/components/LanguageSwitcher";
 import ThemeToggle from '@/components/ThemeToggle';
 
 const queryClient = new QueryClient();
@@ -49,9 +48,6 @@ const App = () => {
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
-
-        {/* show language switcher across all pages when a profile exists */}
-        <LanguageSwitcher />
       </TooltipProvider>
     </QueryClientProvider>
   );

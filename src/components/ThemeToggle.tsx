@@ -47,13 +47,13 @@ const ThemeToggle: React.FC = () => {
     '--card-foreground': '0 0% 100%',
     '--popover': '0 0% 6%',
     '--popover-foreground': '0 0% 100%',
-    '--primary-light': '152 60% 18%',
+    '--primary-light': '180 60% 18%',
     '--secondary': '0 0% 6%',
     '--secondary-foreground': '0 0% 92%',
     '--muted': '0 0% 6%',
     '--muted-foreground': '0 0% 72%',
     '--accent-light': '12 90% 18%',
-    '--success-light': '152 60% 18%',
+    '--success-light': '180 60% 18%',
     '--warning-light': '38 92% 18%',
     '--border': '0 0% 12%',
     '--input': '0 0% 8%',
@@ -82,7 +82,7 @@ const ThemeToggle: React.FC = () => {
         aria-label="Toggle theme"
         className={`px-3 py-1 rounded-md border text-sm shadow flex items-center gap-2 font-semibold transition-all ${
           theme === 'dark'
-            ? 'bg-[#3DBB7A] text-white border-[#3DBB7A]'
+            ? 'bg-primary text-primary-foreground border-primary'
             : 'bg-white/90 text-gray-900 border-gray-300'
         }`}
       >
