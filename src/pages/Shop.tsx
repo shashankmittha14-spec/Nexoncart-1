@@ -50,7 +50,7 @@ const Shop = () => {
   const [manualBarcodeInput, setManualBarcodeInput] = useState('');
   const [showManualInput, setShowManualInput] = useState(false);
   const [currentLanguage, setCurrentLanguage] = useState<string>(i18n.language || 'en');
-  const [aiPosition, setAiPosition] = useState({ x: 24, y: -80 });
+  const [aiPosition, setAiPosition] = useState({ x: 0, y: 0 });
   const lastScannedBarcodeRef = useRef(''); // Track last scanned barcode to prevent duplicates
   const lastScanTimeRef = useRef(0); // Track time of last scan to debounce
   const SCAN_DEBOUNCE_MS = 1000; // Minimum time between scans (ms)
@@ -1000,22 +1000,8 @@ const Shop = () => {
         )}
       </AnimatePresence>
 
-      {/* Floating AI Assistant - Draggable Icon */}
-      {profile && (
-        <motion.div
-          className="fixed z-50 cursor-grab active:cursor-grabbing"
-          drag
-          dragElastic={0.1}
-          dragMomentum={false}
-          onDragEnd={handleAiDragEnd}
-          initial={{ x: aiPosition.x, y: aiPosition.y }}
-          animate={{ x: aiPosition.x, y: aiPosition.y }}
-          style={{ bottom: 0, left: 0 }}
-          onMouseLeave={handleAiCloseChat}
-        >
-          <AIAssistant user={profile} inline dropUp />
-        </motion.div>
-      )}
+      {/* Floating AI Assistant - Now self-contained with fixed positioning */}
+      <AIAssistant user={profile} inline dropUp />
     </div>
   );
 };

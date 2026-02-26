@@ -32,6 +32,9 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ user, inline = false, dropUp 
     { from: 'user' | 'assistant'; text: string }[]
   >([]);
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [aiPosition, setAiPosition] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const recognitionRef = useRef<any>(null);
   const { t } = useTranslation();
   const { i18n } = useTranslation();
@@ -78,6 +81,16 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ user, inline = false, dropUp 
     const observer = new MutationObserver(checkTheme);
     observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
 
+    // Load saved AI position
+    try {
+      const savedPosition = localStorage.getItem('nexoncart_ai_assistant_position');
+      if (savedPosition) {
+        setAiPosition(JSON.parse(savedPosition));
+      }
+    } catch (e) {
+      // ignore
+    }
+
     return () => observer.disconnect();
   }, []);
 
@@ -103,6 +116,41 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ user, inline = false, dropUp 
       setListening(false);
     }
   };
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    setIsDragging(true);
+    setDragStart({ x: e.clientX - aiPosition.x, y: e.clientY - aiPosition.y });
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging) return;
+    const newX = e.clientX - dragStart.x;
+    const newY = e.clientY - dragStart.y;
+    setAiPosition({ x: newX, y: newY });
+  };
+
+  const handleMouseUp = () => {
+    if (isDragging) {
+      setIsDragging(false);
+      // Save position to localStorage
+      try {
+        localStorage.setItem('nexoncart_ai_assistant_position', JSON.stringify(aiPosition));
+      } catch (e) {
+        // ignore
+      }
+    }
+  };
+
+  useEffect(() => {
+    if (isDragging) {
+      document.addEventListener('mousemove', handleMouseMove as any);
+      document.addEventListener('mouseup', handleMouseUp);
+      return () => {
+        document.removeEventListener('mousemove', handleMouseMove as any);
+        document.removeEventListener('mouseup', handleMouseUp);
+      };
+    }
+  }, [isDragging, dragStart, aiPosition]);
 
   const sendMessage = async () => {
     const text = input.trim();
@@ -188,92 +236,151 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ user, inline = false, dropUp 
   if (inline) {
     const { t } = useTranslation();
     return (
-      <div className="inline-flex items-center">
-        {open ? (
-          <div className={`absolute bottom-6 left-0 z-50 w-64 sm:w-80 p-3 rounded-xl shadow-2xl border transition-colors ${
-            isDarkMode 
-              ? 'bg-slate-900 border-slate-700 text-white' 
-              : 'bg-white border-gray-200 text-gray-900'
-          }`}>
-            <div className="flex items-center justify-between mb-2">
-              <div className="font-semibold">NexonCart.Assistant</div>
+      <>
+        {/* Always visible fallback button */}
+        <div 
+          style={{
+            position: 'fixed',
+            bottom: `calc(150px + ${aiPosition.y}px)`,
+            left: `calc(24px + ${aiPosition.x}px)`,
+            zIndex: 9999,
+            width: '48px',
+            height: '48px',
+            cursor: isDragging ? 'grabbing' : 'grab',
+          }}
+        >
+          <button
+            onClick={() => !isDragging && setOpen(!open)}
+            onMouseDown={handleMouseDown}
+            title={t('assistant.label')}
+            style={{
+              width: '48px',
+              height: '48px',
+              borderRadius: '50%',
+              backgroundColor: '#06B6D4',
+              border: 'none',
+              cursor: isDragging ? 'grabbing' : 'grab',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+              transition: 'background-color 0.2s ease',
+            }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#0891B2';
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#06B6D4';
+            }}
+          >
+            <Mic style={{ width: '24px', height: '24px', color: 'white' }} />
+          </button>
+        </div>
+
+        {/* Chat popup - appears above the button */}
+        {open && (
+          <div 
+            style={{
+              position: 'fixed',
+              bottom: `calc(210px + ${aiPosition.y}px)`,
+              left: `calc(24px + ${aiPosition.x}px)`,
+              zIndex: 9998,
+              width: '280px',
+              backgroundColor: isDarkMode ? '#1e293b' : '#ffffff',
+              border: `1px solid ${isDarkMode ? '#475569' : '#e5e7eb'}`,
+              borderRadius: '12px',
+              padding: '12px',
+              boxShadow: '0 20px 25px rgba(0, 0, 0, 0.15)',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+              <div style={{ fontWeight: 600, color: isDarkMode ? '#ffffff' : '#000000' }}>NexonCart.Assistant</div>
               <button
                 onClick={() => {
                   setOpen(false);
                   window.speechSynthesis.cancel();
                 }}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }}
               >
-                <X className={`w-4 h-4 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`} />
+                <X style={{ width: '16px', height: '16px', color: isDarkMode ? '#d1d5db' : '#374151' }} />
               </button>
             </div>
 
-            <div className={`sm:h-40 h-32 overflow-y-auto mb-2 text-sm p-2 rounded ${
-              isDarkMode 
-                ? 'bg-slate-800 border border-slate-700' 
-                : 'bg-gray-50 border border-gray-200'
-            }`}>
+            <div style={{
+              height: '128px',
+              overflowY: 'auto',
+              marginBottom: '8px',
+              padding: '8px',
+              borderRadius: '6px',
+              backgroundColor: isDarkMode ? '#0f172a' : '#f9fafb',
+              border: `1px solid ${isDarkMode ? '#334155' : '#e5e7eb'}`,
+              fontSize: '14px',
+            }}>
               {messages.map((m, i) => (
-                <div key={i} className={`mb-2 ${m.from === 'user' ? 'text-right' : ''}`}>
-                  <span className={`inline-block px-2 py-1 rounded ${
-                    m.from === 'user'
-                      ? isDarkMode 
-                        ? 'bg-primary text-white' 
-                        : 'bg-cyan-100 text-cyan-900'
-                      : isDarkMode 
-                        ? 'bg-slate-700 text-gray-100' 
-                        : 'bg-gray-200 text-gray-900'
-                  }`}>{m.text}</span>
+                <div key={i} style={{ marginBottom: '8px', textAlign: m.from === 'user' ? 'right' : 'left' }}>
+                  <span style={{
+                    display: 'inline-block',
+                    padding: '8px',
+                    borderRadius: '6px',
+                    backgroundColor: m.from === 'user' 
+                      ? isDarkMode ? '#0891b2' : '#a5f3fc'
+                      : isDarkMode ? '#334155' : '#e5e7eb',
+                    color: m.from === 'user'
+                      ? isDarkMode ? '#ffffff' : '#06b6d4'
+                      : isDarkMode ? '#f1f5f9' : '#1f2937',
+                  }}>{m.text}</span>
                 </div>
               ))}
             </div>
 
-            <div className="flex gap-2">
+            <div style={{ display: 'flex', gap: '8px' }}>
               <button
                 onClick={() => (listening ? recognitionRef.current?.stop() : startListening())}
-                className={`p-2 rounded transition-colors ${
-                  isDarkMode 
-                    ? 'bg-slate-700 hover:bg-slate-600 text-white' 
-                    : 'bg-gray-200 hover:bg-gray-300 text-gray-900'
-                }`}
+                style={{
+                  padding: '8px',
+                  borderRadius: '6px',
+                  backgroundColor: isDarkMode ? '#334155' : '#e5e7eb',
+                  border: 'none',
+                  cursor: 'pointer',
+                  color: isDarkMode ? '#ffffff' : '#111827',
+                }}
               >
-                <Mic className="w-4 h-4" />
+                <Mic style={{ width: '16px', height: '16px' }} />
               </button>
 
               <input
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
-                className={`flex-1 border rounded px-2 py-1 text-sm transition-colors ${
-                  isDarkMode 
-                    ? 'bg-slate-800 border-slate-700 text-white placeholder-gray-400' 
-                    : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-                }`}
                 placeholder={t('assistant.placeholder')}
+                style={{
+                  flex: 1,
+                  border: `1px solid ${isDarkMode ? '#475569' : '#d1d5db'}`,
+                  borderRadius: '6px',
+                  padding: '8px',
+                  fontSize: '14px',
+                  backgroundColor: isDarkMode ? '#0f172a' : '#ffffff',
+                  color: isDarkMode ? '#ffffff' : '#000000',
+                }}
               />
 
-              <button onClick={sendMessage} className={`p-2 rounded transition-colors ${
-                isDarkMode 
-                  ? 'bg-primary text-primary-foreground hover:bg-primary/90' 
-                  : 'bg-black text-white hover:bg-gray-800'
-              }`}>
-                <Send className="w-4 h-4" />
+              <button 
+                onClick={sendMessage}
+                style={{
+                  padding: '8px',
+                  borderRadius: '6px',
+                  backgroundColor: '#06b6d4',
+                  border: 'none',
+                  cursor: 'pointer',
+                  color: '#ffffff',
+                }}
+              >
+                <Send style={{ width: '16px', height: '16px' }} />
               </button>
             </div>
           </div>
-        ) : (
-          <button
-            onClick={() => setOpen(true)}
-            title={t('assistant.label')}
-            className={`w-10 h-10 rounded-full flex items-center justify-center mr-2 transition-colors ${
-              isDarkMode 
-                ? 'bg-primary text-primary-foreground' 
-                : 'bg-black text-white'
-            }`}
-          >
-            <Mic className="w-4 h-4" />
-          </button>
         )}
-      </div>
+      </>
     );
   }
 
