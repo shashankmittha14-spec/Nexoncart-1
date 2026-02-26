@@ -28,83 +28,113 @@ interface VerificationResult {
 const Guard = () => {
   const [isScanning, setIsScanning] = useState(false);
   const [result, setResult] = useState<VerificationResult | null>(null);
+  const [isInitializing, setIsInitializing] = useState(false);
   const scannerRef = useRef<Html5Qrcode | null>(null);
 
-  const startScanner = async () => {
-    try {
-      const html5QrCode = new Html5Qrcode('guard-scanner');
-      scannerRef.current = html5QrCode;
+  // Initialize scanner once the element is ready
+  useEffect(() => {
+    if (isInitializing && isScanning) {
+      const initScanner = async () => {
+        try {
+          // Small delay to ensure DOM is updated
+          await new Promise(resolve => setTimeout(resolve, 100));
+          
+          const html5QrCode = new Html5Qrcode('guard-scanner');
+          scannerRef.current = html5QrCode;
 
-      // Get available cameras and prefer rear camera on mobile
-      const cameras = await Html5Qrcode.getCameras();
-      
-      if (!cameras || cameras.length === 0) {
-        throw new Error('No cameras found on this device');
-      }
+          const config = {
+            fps: 10,
+            qrbox: { width: 250, height: 250 },
+            aspectRatio: 1.0,
+            disableFlip: false,
+          };
 
-      // Try to find rear camera (environment-facing)
-      let selectedCamera = cameras[cameras.length - 1]; // Default to last camera
-      
-      // Look for rear/environment camera
-      for (const camera of cameras) {
-        if (camera.label.toLowerCase().includes('back') || 
-            camera.label.toLowerCase().includes('rear') ||
-            camera.label.toLowerCase().includes('environment')) {
-          selectedCamera = camera;
-          break;
-        }
-      }
-
-      const config = {
-        fps: 10,
-        qrbox: { width: 250, height: 250 },
-        aspectRatio: 1.0,
-        disableFlip: false,
-      };
-
-      await html5QrCode.start(
-        { deviceId: { exact: selectedCamera.id } },
-        config,
-        (decodedText) => {
+          // Try to get available cameras first
+          let startConfig: any = { facingMode: 'environment' };
+          
           try {
-            const data = JSON.parse(decodedText);
-            if (data.sessionId && data.transactionId && data.status === 'paid') {
-              setResult({
-                valid: true,
-                sessionId: data.sessionId,
-                transactionId: data.transactionId,
-                amount: data.amount,
-                items: data.items,
-                timestamp: data.timestamp,
-                status: data.status,
-              });
-            } else {
-              setResult({
-                valid: false,
-                message: 'Invalid or unpaid exit pass',
-              });
+            const cameras = await Html5Qrcode.getCameras();
+            
+            if (cameras && cameras.length > 0) {
+              // Try to find rear camera on mobile
+              let selectedCamera = cameras[0];
+              
+              for (const camera of cameras) {
+                const label = camera.label.toLowerCase();
+                if (label.includes('back') || label.includes('rear') || label.includes('environment')) {
+                  selectedCamera = camera;
+                  break;
+                }
+              }
+              
+              startConfig = { deviceId: { exact: selectedCamera.id } };
             }
-          } catch {
-            setResult({
-              valid: false,
-              message: 'Invalid QR code format',
-            });
+          } catch (cameraListError) {
+            // If camera enumeration fails, fall back to facingMode
+            console.warn('Camera enumeration failed, using facingMode fallback:', cameraListError);
           }
-          stopScanner();
-        },
-        (errorMessage) => {
-          // Handle scan errors silently
-          console.debug('Scan error:', errorMessage);
-        }
-      );
 
-      setIsScanning(true);
-    } catch (err) {
-      console.error('Error starting scanner:', err);
-      setIsScanning(false);
-      alert('Unable to access camera. Please check camera permissions and try again.');
+          await html5QrCode.start(
+            startConfig,
+            config,
+            (decodedText) => {
+              try {
+                const data = JSON.parse(decodedText);
+                if (data.sessionId && data.transactionId && data.status === 'paid') {
+                  setResult({
+                    valid: true,
+                    sessionId: data.sessionId,
+                    transactionId: data.transactionId,
+                    amount: data.amount,
+                    items: data.items,
+                    timestamp: data.timestamp,
+                    status: data.status,
+                  });
+                } else {
+                  setResult({
+                    valid: false,
+                    message: 'Invalid or unpaid exit pass',
+                  });
+                }
+              } catch {
+                setResult({
+                  valid: false,
+                  message: 'Invalid QR code format',
+                });
+              }
+              stopScanner();
+            },
+            (errorMessage) => {
+              // Handle scan errors silently
+              console.debug('Scan error:', errorMessage);
+            }
+          );
+
+          setIsInitializing(false);
+        } catch (err) {
+          console.error('Error starting scanner:', err);
+          setIsScanning(false);
+          setIsInitializing(false);
+          
+          let errorMessage = 'Unable to access camera. Please check camera permissions and try again.';
+          
+          if (err instanceof Error) {
+            if (err.message.includes('NotAllowedError') || err.message.includes('permission')) {
+              errorMessage = 'Camera permission denied. Please enable camera access in your browser settings.';
+            } else if (err.message.includes('NotFoundError')) {
+              errorMessage = 'No camera found on this device.';
+            } else if (err.message.includes('NotReadableError')) {
+              errorMessage = 'Camera is already in use by another app. Please close other apps using the camera.';
+            }
+          }
+          
+          alert(errorMessage);
+        }
+      };
+      
+      initScanner();
     }
-  };
+  }, [isInitializing, isScanning]);
 
   const stopScanner = async () => {
     if (scannerRef.current?.isScanning) {
@@ -116,7 +146,8 @@ const Guard = () => {
 
   const resetScanner = () => {
     setResult(null);
-    startScanner();
+    setIsScanning(true);
+    setIsInitializing(true);
   };
 
   useEffect(() => {
@@ -161,43 +192,48 @@ const Guard = () => {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="glass-card p-6"
+                className="glass-card p-0"
               >
-                <div 
-                  id="guard-scanner" 
-                  className={`rounded-xl overflow-hidden bg-foreground/5 ${
-                    isScanning ? 'w-full' : 'hidden'
-                  }`}
-                  style={isScanning ? {
-                    width: '100%',
-                    aspectRatio: '1',
-                    maxWidth: '100vw',
-                    maxHeight: 'calc(100vh - 200px)'
-                  } : {}}
-                />
+                {isScanning && (
+                  <div 
+                    id="guard-scanner" 
+                    className="rounded-t-xl overflow-hidden bg-black w-full"
+                    style={{
+                      width: '100%',
+                      aspectRatio: '1 / 1',
+                    }}
+                  />
+                )}
 
                 {!isScanning && (
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={startScanner}
-                    className="w-full py-16 rounded-xl border-2 border-dashed border-primary/30 bg-primary/5 flex flex-col items-center justify-center gap-4 transition-colors hover:border-primary/50 hover:bg-primary/10"
-                  >
-                    <div className="w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center">
-                      <Camera className="w-10 h-10 text-primary" />
-                    </div>
-                    <span className="font-semibold text-foreground text-lg">Start Scanning</span>
-                    <span className="text-sm text-muted-foreground">Scan customer's exit QR code</span>
-                  </motion.button>
+                  <div className="p-6">
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => {
+                        setIsScanning(true);
+                        setIsInitializing(true);
+                      }}
+                      className="w-full py-16 rounded-xl border-2 border-dashed border-primary/30 bg-primary/5 flex flex-col items-center justify-center gap-4 transition-colors hover:border-primary/50 hover:bg-primary/10"
+                    >
+                      <div className="w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center">
+                        <Camera className="w-10 h-10 text-primary" />
+                      </div>
+                      <span className="font-semibold text-foreground text-lg">Start Scanning</span>
+                      <span className="text-sm text-muted-foreground">Scan customer's exit QR code</span>
+                    </motion.button>
+                  </div>
                 )}
 
                 {isScanning && (
-                  <button
-                    onClick={stopScanner}
-                    className="w-full mt-4 py-3 rounded-xl border border-border text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    Cancel
-                  </button>
+                  <div className="p-4 border-t border-border">
+                    <button
+                      onClick={stopScanner}
+                      className="w-full py-3 rounded-xl border border-border text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
                 )}
               </motion.div>
             )}
