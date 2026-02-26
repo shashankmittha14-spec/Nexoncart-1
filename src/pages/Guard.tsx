@@ -35,12 +35,36 @@ const Guard = () => {
       const html5QrCode = new Html5Qrcode('guard-scanner');
       scannerRef.current = html5QrCode;
 
+      // Get available cameras and prefer rear camera on mobile
+      const cameras = await Html5Qrcode.getCameras();
+      
+      if (!cameras || cameras.length === 0) {
+        throw new Error('No cameras found on this device');
+      }
+
+      // Try to find rear camera (environment-facing)
+      let selectedCamera = cameras[cameras.length - 1]; // Default to last camera
+      
+      // Look for rear/environment camera
+      for (const camera of cameras) {
+        if (camera.label.toLowerCase().includes('back') || 
+            camera.label.toLowerCase().includes('rear') ||
+            camera.label.toLowerCase().includes('environment')) {
+          selectedCamera = camera;
+          break;
+        }
+      }
+
+      const config = {
+        fps: 10,
+        qrbox: { width: 250, height: 250 },
+        aspectRatio: 1.0,
+        disableFlip: false,
+      };
+
       await html5QrCode.start(
-        { facingMode: 'environment' },
-        {
-          fps: 10,
-          qrbox: { width: 250, height: 250 },
-        },
+        { deviceId: { exact: selectedCamera.id } },
+        config,
         (decodedText) => {
           try {
             const data = JSON.parse(decodedText);
@@ -68,12 +92,17 @@ const Guard = () => {
           }
           stopScanner();
         },
-        () => {}
+        (errorMessage) => {
+          // Handle scan errors silently
+          console.debug('Scan error:', errorMessage);
+        }
       );
 
       setIsScanning(true);
     } catch (err) {
       console.error('Error starting scanner:', err);
+      setIsScanning(false);
+      alert('Unable to access camera. Please check camera permissions and try again.');
     }
   };
 
@@ -137,8 +166,14 @@ const Guard = () => {
                 <div 
                   id="guard-scanner" 
                   className={`rounded-xl overflow-hidden bg-foreground/5 ${
-                    isScanning ? 'aspect-square' : 'hidden'
+                    isScanning ? 'w-full' : 'hidden'
                   }`}
+                  style={isScanning ? {
+                    width: '100%',
+                    aspectRatio: '1',
+                    maxWidth: '100vw',
+                    maxHeight: 'calc(100vh - 200px)'
+                  } : {}}
                 />
 
                 {!isScanning && (
