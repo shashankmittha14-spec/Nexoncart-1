@@ -96,6 +96,11 @@ export const useCartStore = create<CartState>()(
     }),
     {
       name: 'nexoncart-cart',
+      partialize: (state) => ({
+        items: state.items,
+        budgetLimit: state.budgetLimit,
+        sessionId: state.sessionId,
+      }),
     }
   )
 );

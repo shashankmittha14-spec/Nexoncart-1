@@ -234,7 +234,6 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ user, inline = false, dropUp 
   };
 
   if (inline) {
-    const { t } = useTranslation();
     return (
       <>
         {/* Always visible fallback button */}

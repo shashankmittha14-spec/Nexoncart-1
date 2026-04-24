@@ -37,7 +37,7 @@ const Guard = () => {
       const initScanner = async () => {
         try {
           // Small delay to ensure DOM is updated
-          await new Promise(resolve => setTimeout(resolve, 100));
+          await new Promise(resolve => setTimeout(resolve, 300));
           
           const html5QrCode = new Html5Qrcode('guard-scanner');
           scannerRef.current = html5QrCode;
@@ -50,7 +50,7 @@ const Guard = () => {
           };
 
           // Try to get available cameras first
-          let startConfig: any = { facingMode: 'environment' };
+          let selectedCameraId: string | null = null;
           
           try {
             const cameras = await Html5Qrcode.getCameras();
@@ -67,15 +67,18 @@ const Guard = () => {
                 }
               }
               
-              startConfig = { deviceId: { exact: selectedCamera.id } };
+              selectedCameraId = selectedCamera.id;
             }
           } catch (cameraListError) {
             // If camera enumeration fails, fall back to facingMode
             console.warn('Camera enumeration failed, using facingMode fallback:', cameraListError);
           }
 
+          // Start with camera ID if found, otherwise use facingMode
+          const cameraIdOrConfig = selectedCameraId || { facingMode: 'environment' };
+
           await html5QrCode.start(
-            startConfig,
+            cameraIdOrConfig,
             config,
             (decodedText) => {
               try {
@@ -137,8 +140,17 @@ const Guard = () => {
   }, [isInitializing, isScanning]);
 
   const stopScanner = async () => {
-    if (scannerRef.current?.isScanning) {
-      await scannerRef.current.stop();
+    if (scannerRef.current) {
+      try {
+        if (scannerRef.current.isScanning) {
+          await scannerRef.current.stop();
+        }
+      } catch (err) {
+        console.warn('Error stopping guard scanner:', err);
+      }
+      try {
+        scannerRef.current.clear();
+      } catch {}
       scannerRef.current = null;
     }
     setIsScanning(false);
@@ -152,8 +164,14 @@ const Guard = () => {
 
   useEffect(() => {
     return () => {
-      if (scannerRef.current?.isScanning) {
-        scannerRef.current.stop();
+      if (scannerRef.current) {
+        try {
+          if (scannerRef.current.isScanning) {
+            scannerRef.current.stop();
+          }
+          scannerRef.current.clear();
+        } catch {}
+        scannerRef.current = null;
       }
     };
   }, []);

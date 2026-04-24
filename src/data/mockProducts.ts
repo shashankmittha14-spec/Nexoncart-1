@@ -100,6 +100,24 @@ export const mockProducts: Product[] = [
     category: 'Beverages',
     stock: 40,
   },
+  {
+    id: '20',
+    name: 'DOMS Pencil Box',
+    price: 50,
+    barcode: '8908004279403',
+    image: 'https://images.unsplash.com/photo-1595054170884-21eb7981541f?w=200&h=200&fit=crop',
+    category: 'Stationery',
+    stock: 100,
+  },
+  {
+    id: '21',
+    name: 'DOMS Pencil Box',
+    price: 50,
+    barcode: '948244279403', // Webcam misread variant
+    image: 'https://images.unsplash.com/photo-1595054170884-21eb7981541f?w=200&h=200&fit=crop',
+    category: 'Stationery',
+    stock: 100,
+  },
 ];
 
 const normalizeBarcode = (b: string) => {
