@@ -118,6 +118,15 @@ export const mockProducts: Product[] = [
     category: 'Stationery',
     stock: 100,
   },
+  {
+    id: '22',
+    name: 'A4 ClassMate Notebook',
+    price: 80,
+    barcode: '8902519009807',
+    image: 'https://images.unsplash.com/photo-1531346878377-a5be20888e57?w=200&h=200&fit=crop',
+    category: 'Stationery',
+    stock: 150,
+  },
 ];
 
 const normalizeBarcode = (b: string) => {
